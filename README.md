@@ -1,38 +1,97 @@
-# CatgirlDownloader
-A GTK4 application that downloads images of catgirl based on https://nekos.moe
+# Catgirl Downloader for Android
 
-An Android port (Android 12+) lives in [`android/`](android/).
-![](http://nyarchlinux.moe/assets/img/catgirldownloader-screenshots.png)
+A native Android app (Android 12 or newer) for browsing and saving random anime-style images of catgirls,
+waifus and foxgirls. It is a port of the GTK4 desktop app
+[CatgirlDownloader](https://github.com/NyarchLinux/CatgirlDownloader) by the Nyarch Linux team, rewritten
+in Kotlin with Jetpack Compose and Material 3.
 
-## Building
-1. `meson setup <build_dir> [--prefix <prefix>]`
-> Prefix is `/usr/local` by default
-2. `meson compile -C <build_dir>`
-3. `meson install -C <build_dir> [--destdir <dest_dir>]`
-> Package is installed globally by default, or in `<dest_dir>` if `--destdir` is specified (path are relative to `<build_dir>` )
+## Download
 
-## Packaging
-Make sure you have `nfpm` and `sh` installed, then run `./package.sh`.
+Get the latest `CatgirlDownloader-<version>.apk` from the
+[**Releases**](../../releases/latest) page and open it on your phone. Android asks you to allow installing
+apps from your browser or file manager the first time.
 
-## Android
+Requirements: **Android 12 (API 31) or newer**, internet access.
 
-The [`android/`](android/) directory holds a native Android port written in Kotlin with Jetpack Compose
-and Material 3 (Material You dynamic colors). It requires **Android 12 (API 31) or newer**.
+## Features
 
-It has the same features as the desktop app: the Catgirl (nekos.moe), Waifu, Danbooru (custom tags) and
-Kitsune (nekos.best) sources, NSFW filter, auto reload with a configurable interval, "About art",
-a configurable download folder and auto save. On Android, images are saved to `Pictures/CatgirlDownloader`
-by default (no storage permission needed), or to any folder picked in Preferences.
+- **Four image sources**, switchable from the title bar:
+  - **Catgirl**: [nekos.moe](https://nekos.moe)
+  - **Waifu**: waifu.im-compatible API
+  - **Danbooru**: [danbooru.donmai.us](https://danbooru.donmai.us), with your own search tags
+  - **Kitsune**: foxgirls from [nekos.best](https://nekos.best) (SFW only)
+- **NSFW filter**: *Block NSFW* (default), *Show everything* or *Only NSFW*.
+- **Auto reload**: loads a new image every *N* seconds (1–3600). It pauses while the app is in the background.
+- **About art**: shows the artist and a link to the image's original source.
+- **Saving**:
+  - default folder `Pictures/CatgirlDownloader`, which needs no storage permission;
+  - or any folder you pick in *Preferences*;
+  - with *Auto save* off, the save button opens the system "Save as" picker.
+- Pinch-to-zoom and double-tap zoom, animated GIF/WebP support.
+- Material You colors from your wallpaper, light and dark theme, themed launcher icon (Android 13+).
+- English and Polish interface.
 
-### Building
-Requires JDK 17+ and the Android SDK (platform 35). Point `ANDROID_HOME` at the SDK, or create
-`android/local.properties` with `sdk.dir=/path/to/sdk`, then:
+Danbooru hides certain tags from anonymous users. The app strips those tags from your search and tells you
+when it does.
+
+## Building from source
+
+Requirements: JDK 17+ and the Android SDK with platform 35. Set `ANDROID_HOME` to the SDK location, or create
+`android/local.properties` containing `sdk.dir=/path/to/android/sdk`.
 
 ```sh
 cd android
-./gradlew assembleDebug        # APK in app/build/outputs/apk/debug/
-./gradlew testDebugUnitTest    # unit tests
+./gradlew assembleDebug          # app/build/outputs/apk/debug/app-debug.apk
+./gradlew assembleRelease        # app/build/outputs/apk/release/app-release.apk (minified)
+./gradlew testDebugUnitTest      # unit tests
 ```
 
-Opening `android/` in Android Studio also works. The `Android` GitHub workflow builds a debug APK on every
-push and attaches it to releases.
+You can also open the `android/` folder in Android Studio.
+
+### Project layout
+
+```
+android/app/src/main/java/moe/nyarchlinux/catgirldownloader/
+├── api/        image sources (nekos.moe, waifu, Danbooru, nekos.best) and the HTTP client
+├── data/       settings (NSFW mode, auto reload, Danbooru tags, download folder, auto save)
+├── storage/    image format detection and saving (MediaStore / Storage Access Framework)
+├── ui/         Compose screens: main screen, preferences, dialogs, theme
+└── MainViewModel.kt   loading, auto reload and saving logic
+```
+
+## Releases and signing
+
+The [`Android`](.github/workflows/android.yml) GitHub workflow runs the unit tests and builds the APK on every
+push. Pushing a tag that starts with `v` (for example `v0.5`) also publishes a GitHub release with the APK
+attached.
+
+By default the release APK is signed with a temporary debug key. To sign it with your own key, so that
+users can update the app without uninstalling it first, add these repository secrets:
+
+| Secret | Value |
+| --- | --- |
+| `ANDROID_KEYSTORE_BASE64` | your `.jks` keystore, base64-encoded (`base64 -w0 release.jks`) |
+| `ANDROID_KEYSTORE_PASSWORD` | keystore password |
+| `ANDROID_KEY_ALIAS` | key alias |
+| `ANDROID_KEY_PASSWORD` | key password |
+
+You can create a keystore with
+`keytool -genkeypair -v -keystore release.jks -keyalg RSA -keysize 4096 -validity 10000 -alias catgirldownloader`.
+
+## Desktop version
+
+The original GTK4/Libadwaita desktop app still lives in this repository (`src/`, `data/`, `meson.build`).
+Build it with Meson:
+
+```sh
+meson setup build
+meson compile -C build
+meson install -C build
+```
+
+Run `./package.sh` (needs `nfpm`) to build distribution packages.
+
+## License
+
+GNU General Public License v3.0 or later. See [COPYING](COPYING).
+Original app © Nyarch Linux developers team / SilverOS.
