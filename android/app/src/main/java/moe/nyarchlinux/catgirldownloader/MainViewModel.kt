@@ -90,9 +90,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private class Prefetch(val key: PrefetchKey, val image: Deferred<LoadedImage>)
 
-    private data class PrefetchKey(val sourceId: String, val nsfw: NsfwMode, val tags: String)
+    private data class PrefetchKey(
+        val sourceId: String,
+        val nsfw: NsfwMode,
+        val tags: String,
+        val originalQuality: Boolean,
+    )
 
-    private fun Settings.prefetchKey() = PrefetchKey(sourceId, nsfwMode, danbooruTags)
+    private fun Settings.prefetchKey() = PrefetchKey(sourceId, nsfwMode, danbooruTags, originalQuality)
 
     init {
         // Re-arm the auto-reload timer whenever the switch or interval changes (from any screen).
@@ -181,7 +186,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private suspend fun fetchImage(settings: Settings): LoadedImage {
         val entry = Sources.byId(settings.sourceId)
-        val post = entry.source.fetchPost(app.http, settings)
+        val fetched = entry.source.fetchPost(app.http, settings)
+        // In original quality mode, download the full-resolution file up front and show it.
+        val post = if (settings.originalQuality && fetched.fullImageUrl != null) {
+            fetched.copy(imageUrl = fetched.fullImageUrl, fullImageUrl = null, fullImageExtension = null)
+        } else {
+            fetched
+        }
         val download = app.http.getBytes(post.imageUrl.toHttpUrl(), entry.source.imageHeaders)
         val format = ImageFormat.detect(download.bytes, download.contentType, post.imageUrl)
             ?: throw NoImageException("Unsupported image format at ${post.imageUrl}")
@@ -220,6 +231,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun setAutoSave(enabled: Boolean) = repo.update { it.copy(autoSaveEnabled = enabled) }
 
     fun setPreloadNext(enabled: Boolean) = repo.update { it.copy(preloadNext = enabled) }
+
+    fun setOriginalQuality(enabled: Boolean) = repo.update { it.copy(originalQuality = enabled) }
 
     /** Stores sanitized tags; returns true if forbidden tags had to be removed. */
     fun setDanbooruTags(raw: String): Boolean {

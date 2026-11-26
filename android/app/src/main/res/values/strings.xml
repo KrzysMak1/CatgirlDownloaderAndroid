@@ -62,6 +62,8 @@
     <string name="pref_download_folder_reset">Use default folder</string>
     <string name="pref_preload">Preload next image</string>
     <string name="pref_preload_desc">Download the next image in the background so it appears instantly. Uses more data.</string>
+    <string name="pref_original_quality">Original quality</string>
+    <string name="pref_original_quality_desc">Load images, including the preloaded next one, in full resolution instead of a lighter preview (Danbooru). Slower and uses more data; nothing is saved to your device.</string>
     <string name="pref_auto_save">Auto save</string>
     <string name="pref_auto_save_desc">Save directly to the download folder instead of asking where to save</string>
     <string name="pref_danbooru_tags">Danbooru tags</string>

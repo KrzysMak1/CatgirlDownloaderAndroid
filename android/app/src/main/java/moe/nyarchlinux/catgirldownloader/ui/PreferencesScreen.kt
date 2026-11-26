@@ -15,6 +15,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material.icons.outlined.Folder
+import androidx.compose.material.icons.outlined.HighQuality
 import androidx.compose.material.icons.outlined.Sell
 import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material.icons.outlined.Speed
@@ -117,6 +118,16 @@ fun PreferencesScreen(
                 supportingContent = { Text(stringResource(R.string.pref_preload_desc)) },
                 trailingContent = {
                     Switch(checked = settings.preloadNext, onCheckedChange = vm::setPreloadNext)
+                },
+            )
+
+            ListItem(
+                modifier = Modifier.clickable { vm.setOriginalQuality(!settings.originalQuality) },
+                leadingContent = { Icon(Icons.Outlined.HighQuality, contentDescription = null) },
+                headlineContent = { Text(stringResource(R.string.pref_original_quality)) },
+                supportingContent = { Text(stringResource(R.string.pref_original_quality_desc)) },
+                trailingContent = {
+                    Switch(checked = settings.originalQuality, onCheckedChange = vm::setOriginalQuality)
                 },
             )
 
