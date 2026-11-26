@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="source_catgirl_desc">Obrazy z nekos.moe.</string>
+    <string name="source_waifu_desc">Obrazy z waifu.im.</string>
+    <string name="source_danbooru_desc">Obrazy z danbooru.donmai.us z własnymi tagami.</string>
+    <string name="source_kitsune_desc">Obrazy lisich dziewczyn z nekos.best.</string>
+    <string name="choose_source">Wybierz źródło</string>
+    <string name="source_settings">Ustawienia źródła</string>
+
+    <string name="reload">Odśwież</string>
+    <string name="save">Zapisz</string>
+    <string name="more_options">Więcej opcji</string>
+    <string name="auto_reload">Automatyczne odświeżanie</string>
+    <string name="about_art">O obrazie</string>
+    <string name="preferences">Ustawienia</string>
+    <string name="about">O aplikacji Catgirl Downloader</string>
+    <string name="image_description">Pobrany obraz</string>
+    <string name="no_image">Nie wczytano jeszcze obrazu</string>
+    <string name="load_failed">Nie udało się wczytać obrazu</string>
+    <string name="display_failed">Nie udało się wyświetlić obrazu</string>
+    <string name="retry">Ponów</string>
+    <string name="saved_to">Zapisano jako %1$s</string>
+    <string name="save_failed">Nie udało się zapisać obrazu</string>
+    <string name="saved">Obraz zapisany</string>
+
+    <string name="artist">Autor</string>
+    <string name="source_link">Źródło</string>
+    <string name="unknown">Nieznany</string>
+    <string name="open_source">Otwórz źródło</string>
+    <string name="close">Zamknij</string>
+
+    <string name="about_version">Wersja %1$s</string>
+    <string name="about_body">Tworzone przez zespół Nyarch Linux.\nDeweloperzy: SilverOS\n© 2026 SilverOS\n\nNa licencji GNU General Public License w wersji 3.0 lub nowszej.</string>
+
+    <string name="back">Wstecz</string>
+    <string name="pref_group_content">Treści</string>
+    <string name="pref_group_reload">Automatyczne odświeżanie</string>
+    <string name="pref_group_saving">Zapisywanie</string>
+    <string name="pref_nsfw">Treści NSFW</string>
+    <string name="nsfw_show_everything">Pokazuj wszystko</string>
+    <string name="nsfw_only">Tylko NSFW</string>
+    <string name="nsfw_block">Blokuj NSFW</string>
+    <string name="pref_auto_reload_interval">Interwał odświeżania</string>
+    <plurals name="seconds">
+        <item quantity="one">%d sekunda</item>
+        <item quantity="few">%d sekundy</item>
+        <item quantity="many">%d sekund</item>
+        <item quantity="other">%d sekundy</item>
+    </plurals>
+    <string name="interval_hint">Sekundy (%1$d–%2$d)</string>
+    <string name="pref_download_folder">Folder pobierania</string>
+    <string name="pref_download_folder_reset">Użyj domyślnego folderu</string>
+    <string name="pref_auto_save">Automatyczny zapis</string>
+    <string name="pref_auto_save_desc">Zapisuj od razu w folderze pobierania zamiast pytać o miejsce</string>
+    <string name="pref_danbooru_tags">Tagi Danbooru</string>
+    <string name="pref_danbooru_tags_none">Brak tagów</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Anuluj</string>
+
+    <string name="danbooru_settings">Ustawienia Danbooru</string>
+    <string name="danbooru_tags_title">Tagi wyszukiwania</string>
+    <string name="danbooru_tags_desc">Wpisz tagi oddzielone spacjami (np. cat_ears solo)</string>
+    <string name="danbooru_tags_placeholder">np. cat_ears solo 1girl</string>
+    <string name="danbooru_forbidden_body">Z powodu ograniczeń Danbooru niektóre tagi zostały automatycznie usunięte z ustawień. Więcej informacji znajdziesz na stronie pomocy Danbooru o „ocenzurowanych tagach”.</string>
+    <string name="danbooru_forbidden_link">Otwórz stronę pomocy</string>
+</resources>

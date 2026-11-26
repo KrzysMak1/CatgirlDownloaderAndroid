@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" translatable="false">Catgirl Downloader</string>
+
+    <!-- Sources -->
+    <string name="source_catgirl" translatable="false">Catgirl</string>
+    <string name="source_catgirl_desc">Generate images from nekos.moe.</string>
+    <string name="source_waifu" translatable="false">Waifu</string>
+    <string name="source_waifu_desc">Generate images from waifu.im.</string>
+    <string name="source_danbooru" translatable="false">Danbooru</string>
+    <string name="source_danbooru_desc">Generate images from danbooru.donmai.us with custom tags.</string>
+    <string name="source_kitsune" translatable="false">Kitsune</string>
+    <string name="source_kitsune_desc">Generate foxgirl images from nekos.best.</string>
+    <string name="choose_source">Choose source</string>
+    <string name="source_settings">Source settings</string>
+
+    <!-- Main screen -->
+    <string name="reload">Reload</string>
+    <string name="save">Save</string>
+    <string name="more_options">More options</string>
+    <string name="auto_reload">Auto reload</string>
+    <string name="about_art">About art</string>
+    <string name="preferences">Preferences</string>
+    <string name="about">About Catgirl Downloader</string>
+    <string name="image_description">Downloaded image</string>
+    <string name="no_image">No image loaded yet</string>
+    <string name="load_failed">Could not load image</string>
+    <string name="display_failed">Could not display image</string>
+    <string name="retry">Retry</string>
+    <string name="saved_to">Saved to %1$s</string>
+    <string name="save_failed">Could not save image</string>
+    <string name="saved">Image saved</string>
+
+    <!-- Art info -->
+    <string name="artist">Artist</string>
+    <string name="source_link">Source</string>
+    <string name="unknown">Unknown</string>
+    <string name="open_source">Open source</string>
+    <string name="close">Close</string>
+
+    <!-- About -->
+    <string name="about_version">Version %1$s</string>
+    <string name="about_body">Developed by the Nyarch Linux developers team.\nDevelopers: SilverOS\n© 2026 SilverOS\n\nLicensed under the GNU General Public License v3.0 or later.</string>
+
+    <!-- Preferences -->
+    <string name="back">Back</string>
+    <string name="pref_group_content">Content</string>
+    <string name="pref_group_reload">Auto reload</string>
+    <string name="pref_group_saving">Saving</string>
+    <string name="pref_nsfw">NSFW content</string>
+    <string name="nsfw_show_everything">Show everything</string>
+    <string name="nsfw_only">Only NSFW</string>
+    <string name="nsfw_block">Block NSFW</string>
+    <string name="pref_auto_reload_interval">Auto reload interval</string>
+    <plurals name="seconds">
+        <item quantity="one">%d second</item>
+        <item quantity="other">%d seconds</item>
+    </plurals>
+    <string name="interval_hint">Seconds (%1$d–%2$d)</string>
+    <string name="pref_download_folder">Download folder</string>
+    <string name="pref_download_folder_reset">Use default folder</string>
+    <string name="pref_auto_save">Auto save</string>
+    <string name="pref_auto_save_desc">Save directly to the download folder instead of asking where to save</string>
+    <string name="pref_danbooru_tags">Danbooru tags</string>
+    <string name="pref_danbooru_tags_none">No tags</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+
+    <!-- Danbooru -->
+    <string name="danbooru_settings">Danbooru settings</string>
+    <string name="danbooru_tags_title">Search tags</string>
+    <string name="danbooru_tags_desc">Enter tags separated by spaces (e.g., cat_ears solo)</string>
+    <string name="danbooru_tags_placeholder">e.g., cat_ears solo 1girl</string>
+    <string name="danbooru_forbidden_body">Due to a limitation of Danbooru, certain tags have been automatically removed from your settings. For more information, see Danbooru\'s \"censored tags\" help page.</string>
+    <string name="danbooru_forbidden_link">Open help page</string>
+</resources>
