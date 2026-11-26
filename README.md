@@ -7,8 +7,8 @@ in Kotlin with Jetpack Compose and Material 3.
 
 ## Download
 
-Get the latest `CatgirlDownloader-<version>.apk` from the
-[**Releases**](../../releases/latest) page and open it on your phone. Android asks you to allow installing
+Get `CatgirlDownloader-<version>.apk` from the [**Releases**](../../releases) page and open it on your phone.
+Current builds are **pre-releases** (testing versions), not yet a finished release. Android asks you to allow installing
 apps from your browser or file manager the first time.
 
 Requirements: **Android 12 (API 31) or newer**, internet access.
@@ -62,12 +62,15 @@ android/app/src/main/java/moe/nyarchlinux/catgirldownloader/
 ## Releases and signing
 
 The [`Android`](.github/workflows/android.yml) GitHub workflow runs the unit tests and builds the APK on every
-push. Releases with the APK attached are published automatically:
+push. Releases with the APK attached are published automatically, as **pre-releases**:
 
-- on a push to `master`, as `v<versionName>` (from `android/app/build.gradle.kts`) if that release does not
-  exist yet, so **bump `versionName` and `versionCode` to publish a new version**;
+- on a push to `master`, as `v<versionName>` (from `android/app/build.gradle.kts`); pushing again with the
+  same version refreshes that pre-release's APK, so **bump `versionName` and `versionCode` for a new version**;
 - when a tag starting with `v` is pushed;
 - or manually from **Actions → Android → Run workflow** with a release tag.
+
+When the app is ready for a stable release, set `prerelease: false` (and `make_latest: true`) in the
+workflow's *Publish GitHub release* step, or edit the release on GitHub.
 
 By default the release APK is signed with a temporary debug key. To sign it with your own key, so that
 users can update the app without uninstalling it first, add these repository secrets:
