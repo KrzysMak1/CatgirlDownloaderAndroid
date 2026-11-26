@@ -17,7 +17,7 @@
     <string name="about">O aplikacji Catgirl Downloader</string>
     <string name="image_description">Pobrany obraz</string>
     <string name="no_image">Nie wczytano jeszcze obrazu</string>
-    <string name="load_failed">Nie udało się wczytać obrazu</string>
+    <string name="load_failed_reason">Nie udało się wczytać obrazu (%1$s)</string>
     <string name="display_failed">Nie udało się wyświetlić obrazu</string>
     <string name="retry">Ponów</string>
     <string name="saved_to">Zapisano jako %1$s</string>

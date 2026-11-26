@@ -14,7 +14,8 @@ import java.util.concurrent.TimeUnit
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
-class HttpStatusException(val code: Int, url: HttpUrl) : IOException("HTTP $code for $url")
+class HttpStatusException(val code: Int, url: HttpUrl, val retryAfterSeconds: Long?) :
+    IOException("HTTP $code for $url")
 
 class Http(private val client: OkHttpClient = defaultClient()) {
 
@@ -35,7 +36,9 @@ class Http(private val client: OkHttpClient = defaultClient()) {
         val response = client.newCall(request).await()
         return withContext(Dispatchers.IO) {
             response.use {
-                if (!it.isSuccessful) throw HttpStatusException(it.code, url)
+                if (!it.isSuccessful) {
+                    throw HttpStatusException(it.code, url, it.header("Retry-After")?.trim()?.toLongOrNull())
+                }
                 read(it)
             }
         }

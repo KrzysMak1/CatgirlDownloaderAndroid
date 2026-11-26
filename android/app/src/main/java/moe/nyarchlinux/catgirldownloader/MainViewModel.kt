@@ -29,6 +29,8 @@ import moe.nyarchlinux.catgirldownloader.api.DanbooruTags
 import moe.nyarchlinux.catgirldownloader.api.ImagePost
 import moe.nyarchlinux.catgirldownloader.api.NoImageException
 import moe.nyarchlinux.catgirldownloader.api.Sources
+import moe.nyarchlinux.catgirldownloader.api.describeError
+import moe.nyarchlinux.catgirldownloader.api.withRetry
 import moe.nyarchlinux.catgirldownloader.data.NsfwMode
 import moe.nyarchlinux.catgirldownloader.data.Settings
 import moe.nyarchlinux.catgirldownloader.storage.ImageFormat
@@ -147,7 +149,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 throw e
             } catch (e: Exception) {
                 Log.w(TAG, "Image loading failed", e)
-                _events.send(UiEvent.Message(R.string.load_failed, retry = true))
+                _events.send(UiEvent.Message(R.string.load_failed_reason, describeError(e), retry = true))
             } finally {
                 if (token == loadToken) {
                     _state.update { it.copy(loading = false) }
@@ -184,7 +186,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         prefetch = Prefetch(settings.prefetchKey(), viewModelScope.async { fetchImage(settings) })
     }
 
-    private suspend fun fetchImage(settings: Settings): LoadedImage {
+    /** Transient failures (rate limits, server or network errors) are retried while still loading. */
+    private suspend fun fetchImage(settings: Settings): LoadedImage = withRetry { fetchImageOnce(settings) }
+
+    private suspend fun fetchImageOnce(settings: Settings): LoadedImage {
         val entry = Sources.byId(settings.sourceId)
         val fetched = entry.source.fetchPost(app.http, settings)
         // In original quality mode, download the full-resolution file up front and show it.

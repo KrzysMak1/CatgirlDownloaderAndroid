@@ -25,7 +25,7 @@
     <string name="about">About Catgirl Downloader</string>
     <string name="image_description">Downloaded image</string>
     <string name="no_image">No image loaded yet</string>
-    <string name="load_failed">Could not load image</string>
+    <string name="load_failed_reason">Could not load image (%1$s)</string>
     <string name="display_failed">Could not display image</string>
     <string name="retry">Retry</string>
     <string name="saved_to">Saved to %1$s</string>
