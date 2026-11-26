@@ -144,36 +144,6 @@ private fun AboutSection(title: Int, body: Int) {
     }
 }
 
-/** Desktop Danbooru preferences window: free-text tag search. */
-@Composable
-fun DanbooruSettingsDialog(initialTags: String, onDismiss: () -> Unit, onSave: (String) -> Unit) {
-    var tags by rememberSaveable { mutableStateOf(initialTags) }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.danbooru_settings)) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(stringResource(R.string.danbooru_tags_desc), style = MaterialTheme.typography.bodyMedium)
-                OutlinedTextField(
-                    value = tags,
-                    onValueChange = { tags = it },
-                    label = { Text(stringResource(R.string.danbooru_tags_title)) },
-                    placeholder = { Text(stringResource(R.string.danbooru_tags_placeholder)) },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(
-                        capitalization = KeyboardCapitalization.None,
-                        autoCorrectEnabled = false,
-                        imeAction = ImeAction.Done,
-                    ),
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-        },
-        confirmButton = { TextButton(onClick = { onSave(tags) }) { Text(stringResource(R.string.ok)) } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } },
-    )
-}
-
 @Composable
 fun ForbiddenTagsDialog(onDismiss: () -> Unit) {
     val uriHandler = LocalUriHandler.current

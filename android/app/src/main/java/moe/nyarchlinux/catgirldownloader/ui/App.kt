@@ -53,6 +53,9 @@ fun CatgirlDownloaderApp(vm: MainViewModel = viewModel()) {
     var showPreferences by rememberSaveable { mutableStateOf(false) }
     var danbooruDialog by rememberSaveable { mutableStateOf(false) }
     var forbiddenDialog by rememberSaveable { mutableStateOf(false) }
+    var blacklistDialog by rememberSaveable { mutableStateOf(false) }
+    // Comma-separated tags in both the Danbooru search and the blacklist; empty = no warning.
+    var conflictTags by rememberSaveable { mutableStateOf("") }
 
     LifecycleStartEffect(vm) {
         vm.setForeground(true)
@@ -94,6 +97,7 @@ fun CatgirlDownloaderApp(vm: MainViewModel = viewModel()) {
                 settings = settings,
                 onBack = { showPreferences = false },
                 onEditDanbooruTags = { danbooruDialog = true },
+                onEditBlacklist = { blacklistDialog = true },
             )
         } else {
             MainScreen(
@@ -114,12 +118,27 @@ fun CatgirlDownloaderApp(vm: MainViewModel = viewModel()) {
     if (danbooruDialog) {
         DanbooruSettingsDialog(
             initialTags = settings.danbooruTags,
+            suggest = vm::suggestDanbooruTags,
             onDismiss = { danbooruDialog = false },
             onSave = { tags ->
                 danbooruDialog = false
                 if (vm.setDanbooruTags(tags)) forbiddenDialog = true
+                conflictTags = vm.danbooruBlacklistConflicts(vm.settings.value.danbooruTags).joinToString(", ")
             },
         )
+    }
+    if (blacklistDialog) {
+        BlacklistDialog(
+            initialTags = settings.blacklistTags,
+            onDismiss = { blacklistDialog = false },
+            onSave = { tags ->
+                blacklistDialog = false
+                conflictTags = vm.setBlacklist(tags).joinToString(", ")
+            },
+        )
+    }
+    if (conflictTags.isNotEmpty() && !forbiddenDialog) {
+        TagConflictDialog(tags = conflictTags, onDismiss = { conflictTags = "" })
     }
     if (forbiddenDialog) {
         ForbiddenTagsDialog(onDismiss = { forbiddenDialog = false })

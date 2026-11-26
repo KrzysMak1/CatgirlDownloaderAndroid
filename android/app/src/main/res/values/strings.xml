@@ -82,8 +82,19 @@
     <!-- Danbooru -->
     <string name="danbooru_settings">Danbooru settings</string>
     <string name="danbooru_tags_title">Search tags</string>
-    <string name="danbooru_tags_desc">Enter tags separated by spaces (e.g., cat_ears solo)</string>
-    <string name="danbooru_tags_placeholder">e.g., cat_ears solo 1girl</string>
+    <string name="danbooru_tags_help">Separate tags with spaces and write multi-word tags with underscores (cat_ears, not \"cat ears\"). Put a minus before a tag to exclude it (-cat_ears). Without a Danbooru account you can use at most two tags.</string>
+    <string name="danbooru_tags_placeholder">e.g., cat_ears solo</string>
+    <string name="danbooru_tag_counter">Tags: %1$d/%2$d</string>
+    <string name="danbooru_too_many_tags">Too many tags without an account</string>
+    <plurals name="image_count">
+        <item quantity="one">%s image</item>
+        <item quantity="other">%s images</item>
+    </plurals>
+    <string name="pref_blacklist">Blacklisted tags</string>
+    <string name="blacklist_help">Images with any of these tags are skipped. Separate tags with spaces (e.g. glasses red_hair). Works for Catgirl, Waifu and Danbooru; Kitsune (nekos.best) doesn\'t report tags.</string>
+    <string name="blacklist_placeholder">e.g. glasses red_hair</string>
+    <string name="tag_conflict_title">Tag conflict</string>
+    <string name="tag_conflict_body">These tags are both in the Danbooru search and on the blacklist: %1$s.\n\nNo Danbooru images can be found until you remove them from one of the two.</string>
     <string name="danbooru_forbidden_body">Due to a limitation of Danbooru, certain tags have been automatically removed from your settings. For more information, see Danbooru\'s \"censored tags\" help page.</string>
     <string name="danbooru_forbidden_link">Open help page</string>
 </resources>

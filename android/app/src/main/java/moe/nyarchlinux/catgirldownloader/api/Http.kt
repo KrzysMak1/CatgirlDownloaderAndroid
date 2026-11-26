@@ -14,8 +14,21 @@ import java.util.concurrent.TimeUnit
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
-class HttpStatusException(val code: Int, url: HttpUrl, val retryAfterSeconds: Long?) :
-    IOException("HTTP $code for $url")
+class HttpStatusException(
+    val code: Int,
+    url: HttpUrl,
+    val retryAfterSeconds: Long?,
+    /** Human-readable reason from a JSON error body ({"message": ...}), if the server sent one. */
+    val serverMessage: String? = null,
+) : IOException("HTTP $code for $url" + (serverMessage?.let { ": $it" } ?: ""))
+
+/** Extracts "message" from a JSON error body such as Danbooru's; null for anything else. */
+internal fun serverMessage(body: String?): String? = try {
+    body?.takeIf { it.trimStart().startsWith("{") }
+        ?.let { org.json.JSONObject(it).stringOrNull("message") }
+} catch (e: org.json.JSONException) {
+    null
+}
 
 class Http(private val client: OkHttpClient = defaultClient()) {
 
@@ -37,7 +50,10 @@ class Http(private val client: OkHttpClient = defaultClient()) {
         return withContext(Dispatchers.IO) {
             response.use {
                 if (!it.isSuccessful) {
-                    throw HttpStatusException(it.code, url, it.header("Retry-After")?.trim()?.toLongOrNull())
+                    val body = runCatching { it.peekBody(16_384).string() }.getOrNull()
+                    throw HttpStatusException(
+                        it.code, url, it.header("Retry-After")?.trim()?.toLongOrNull(), serverMessage(body),
+                    )
                 }
                 read(it)
             }

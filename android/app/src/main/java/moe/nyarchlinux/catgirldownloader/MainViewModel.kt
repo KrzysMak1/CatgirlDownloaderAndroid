@@ -32,7 +32,10 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import okhttp3.HttpUrl.Companion.toHttpUrl
+import moe.nyarchlinux.catgirldownloader.api.Blacklist
+import moe.nyarchlinux.catgirldownloader.api.DanbooruSource
 import moe.nyarchlinux.catgirldownloader.api.DanbooruTags
+import moe.nyarchlinux.catgirldownloader.api.TagSuggestion
 import moe.nyarchlinux.catgirldownloader.api.ImagePost
 import moe.nyarchlinux.catgirldownloader.api.NoImageException
 import moe.nyarchlinux.catgirldownloader.api.Sources
@@ -106,9 +109,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val nsfw: NsfwMode,
         val tags: String,
         val originalQuality: Boolean,
+        val blacklist: String,
     )
 
-    private fun Settings.prefetchKey() = PrefetchKey(sourceId, nsfwMode, danbooruTags, originalQuality)
+    private fun Settings.prefetchKey() =
+        PrefetchKey(sourceId, nsfwMode, danbooruTags, originalQuality, blacklistTags)
 
     init {
         // Re-arm the auto-reload timer whenever the switch or interval changes (from any screen).
@@ -304,6 +309,27 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun setPreloadNext(enabled: Boolean) = repo.update { it.copy(preloadNext = enabled) }
 
     fun setOriginalQuality(enabled: Boolean) = repo.update { it.copy(originalQuality = enabled) }
+
+    /** Stores the normalized blacklist; returns tags that are also in the Danbooru search. */
+    fun setBlacklist(raw: String): List<String> {
+        val normalized = Blacklist.parse(raw).joinToString(" ")
+        repo.update { it.copy(blacklistTags = normalized) }
+        return Blacklist.conflicts(repo.settings.value.danbooruTags, normalized)
+    }
+
+    /** Danbooru tag suggestions for the autocomplete; empty on any failure. */
+    suspend fun suggestDanbooruTags(word: String): List<TagSuggestion> = try {
+        DanbooruSource.suggestTags(app.http, word)
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        Log.w(TAG, "Tag suggestions failed", e)
+        emptyList()
+    }
+
+    /** Search tags that are also on the blacklist. */
+    fun danbooruBlacklistConflicts(tags: String): List<String> =
+        Blacklist.conflicts(tags, repo.settings.value.blacklistTags)
 
     /** Stores sanitized tags; returns true if forbidden tags had to be removed. */
     fun setDanbooruTags(raw: String): Boolean {

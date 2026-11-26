@@ -26,6 +26,8 @@ data class Settings(
     val preloadNext: Boolean = true,
     /** Load full-resolution originals instead of lighter previews (only Danbooru has previews). */
     val originalQuality: Boolean = false,
+    /** Space-separated tags; images with any of them are skipped (all sources that report tags). */
+    val blacklistTags: String = "",
 ) {
     companion object {
         const val DEFAULT_SOURCE = "catgirl"
@@ -69,6 +71,7 @@ class SettingsRepository(context: Context) {
             autoSaveEnabled = prefs.getBoolean(KEY_AUTO_SAVE, defaults.autoSaveEnabled),
             preloadNext = prefs.getBoolean(KEY_PRELOAD, defaults.preloadNext),
             originalQuality = prefs.getBoolean(KEY_ORIGINAL_QUALITY, defaults.originalQuality),
+            blacklistTags = prefs.getString(KEY_BLACKLIST, null) ?: defaults.blacklistTags,
         )
     }
 
@@ -83,6 +86,7 @@ class SettingsRepository(context: Context) {
             .putBoolean(KEY_AUTO_SAVE, s.autoSaveEnabled)
             .putBoolean(KEY_PRELOAD, s.preloadNext)
             .putBoolean(KEY_ORIGINAL_QUALITY, s.originalQuality)
+            .putString(KEY_BLACKLIST, s.blacklistTags)
             .apply()
     }
 
@@ -96,5 +100,6 @@ class SettingsRepository(context: Context) {
         const val KEY_AUTO_SAVE = "auto_save_enabled"
         const val KEY_PRELOAD = "preload_next"
         const val KEY_ORIGINAL_QUALITY = "original_quality"
+        const val KEY_BLACKLIST = "blacklist_tags"
     }
 }

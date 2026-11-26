@@ -42,7 +42,7 @@ suspend fun <T> withRetry(
 
 /** Short, user-facing reason for a failed load, e.g. "HTTP 429" or "timeout". */
 fun describeError(e: Throwable): String = when (e) {
-    is HttpStatusException -> "HTTP ${e.code}"
+    is HttpStatusException -> e.serverMessage ?: "HTTP ${e.code}"
     is SocketTimeoutException -> "timeout"
     is NoImageException -> e.message ?: "no image"
     is java.net.UnknownHostException -> "no connection"

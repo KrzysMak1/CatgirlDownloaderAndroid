@@ -15,14 +15,14 @@ class SourcesTest {
 
     @Test
     fun nekosMoeUrlFollowsNsfwMode() {
-        assertEquals("nsfw=false", NekosMoeSource.requestUrl(NsfwMode.BLOCK_NSFW).query)
-        assertEquals("nsfw=true", NekosMoeSource.requestUrl(NsfwMode.ONLY_NSFW).query)
-        assertNull(NekosMoeSource.requestUrl(NsfwMode.SHOW_EVERYTHING).query)
+        assertEquals("false", NekosMoeSource.requestUrl(NsfwMode.BLOCK_NSFW).queryParameter("nsfw"))
+        assertEquals("true", NekosMoeSource.requestUrl(NsfwMode.ONLY_NSFW).queryParameter("nsfw"))
+        assertNull(NekosMoeSource.requestUrl(NsfwMode.SHOW_EVERYTHING).queryParameter("nsfw"))
     }
 
     @Test
     fun nekosMoeParse() {
-        val post = NekosMoeSource.parse("""{"images":[{"id":"abc123","artist":"Neko Artist"}]}""")
+        val post = NekosMoeSource.parse("""{"images":[{"id":"abc123","artist":"Neko Artist"}]}""")!!
         assertEquals("https://nekos.moe/image/abc123", post.imageUrl)
         assertEquals("https://nekos.moe/post/abc123", post.link)
         assertEquals("Neko Artist", post.artist)
@@ -37,7 +37,7 @@ class SourcesTest {
         assertEquals("IsNsfw=False", WaifuSource.requestUrl(NsfwMode.BLOCK_NSFW).query)
         val post = WaifuSource.parse(
             """{"items":[{"id":42,"url":"https://cdn.example/x.jpg","artists":[{"name":"A"}],"source":null}]}""",
-        )
+        )!!
         assertEquals("https://cdn.example/x.jpg", post.imageUrl)
         assertEquals("42", post.id)
         assertEquals("A", post.artist)
@@ -64,7 +64,7 @@ class SourcesTest {
         assertEquals("", DanbooruSource.buildTagsQuery("", NsfwMode.SHOW_EVERYTHING))
         val url = DanbooruSource.requestUrl("cat_ears", NsfwMode.BLOCK_NSFW)
         assertEquals("cat_ears rating:general", url.queryParameter("tags"))
-        assertEquals("5", url.queryParameter("limit"))
+        assertEquals("20", url.queryParameter("limit"))
         assertEquals("true", url.queryParameter("random"))
         assertNull(DanbooruSource.requestUrl("", NsfwMode.SHOW_EVERYTHING).queryParameter("tags"))
     }

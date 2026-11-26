@@ -20,9 +20,11 @@ Requirements: **Android 12 (API 31) or newer**, internet access.
 - **Four image sources**, switchable from the title bar:
   - **Catgirl**: [nekos.moe](https://nekos.moe)
   - **Waifu**: waifu.im-compatible API
-  - **Danbooru**: [danbooru.donmai.us](https://danbooru.donmai.us), with your own search tags
+  - **Danbooru**: [danbooru.donmai.us](https://danbooru.donmai.us), with your own search tags,
+    tag suggestions while typing and a counter for Danbooru's 2-tag limit
   - **Kitsune**: foxgirls from [nekos.best](https://nekos.best) (SFW only)
 - **NSFW filter**: *Block NSFW* (default), *Show everything* or *Only NSFW*.
+- **Blacklisted tags**: images with any of these tags are skipped (Catgirl, Waifu, Danbooru).
 - **Auto reload**: loads a new image every *N* seconds (1–3600). It pauses while the app is in the background.
 - **About art**: shows the artist and a link to the image's original source.
 - **Saving**:

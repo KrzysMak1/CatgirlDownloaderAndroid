@@ -26,6 +26,10 @@ object DanbooruTags {
 
     internal fun isForbiddenPost(tagString: String): Boolean =
         tagString.split(' ').any { it in forbidden }
+
+    /** A tag name containing a forbidden word, e.g. as one part of "x_y" (upstream PR #23). */
+    internal fun isForbiddenName(name: String): Boolean =
+        name.lowercase().split('_').any { it in forbidden }
 }
 
 /** Port of `danbooru.DanbooruDownloaderAPI`. */
@@ -35,7 +39,11 @@ object DanbooruSource : ImageSource {
 
     private const val ENDPOINT = "https://danbooru.donmai.us"
     /** Random posts fetched per request; the first suitable one is used. */
-    private const val BATCH_SIZE = 5
+    private const val BATCH_SIZE = 20
+
+    /** Danbooru allows anonymous users to search for at most this many tags. */
+    const val MAX_ANONYMOUS_TAGS = 2
+    private const val SUGGESTION_LIMIT = 10
     private const val MAX_REQUESTS = 3
 
     /** Danbooru posts can be videos or ugoira archives; only keep formats we can show. */
@@ -88,16 +96,44 @@ object DanbooruSource : ImageSource {
         )
     }
 
-    internal fun firstSuitable(posts: JSONArray): ImagePost? =
-        (0 until posts.length()).firstNotNullOfOrNull { i -> posts.optJSONObject(i)?.let(::parsePost) }
+    internal fun firstSuitable(posts: JSONArray, blacklist: List<String> = emptyList()): ImagePost? =
+        (0 until posts.length()).firstNotNullOfOrNull { i ->
+            posts.optJSONObject(i)
+                // Filtered here rather than with "-tag" in the query: excluded tags count
+                // towards Danbooru's 2-tag limit for anonymous users.
+                ?.takeIf { Blacklist.matches(it.optString("tag_string").split(' '), blacklist).isEmpty() }
+                ?.let(::parsePost)
+        }
+
+    internal fun suggestionsUrl(word: String): HttpUrl =
+        "$ENDPOINT/tags.json".toHttpUrl().newBuilder()
+            .addQueryParameter("search[name_matches]", "$word*")
+            .addQueryParameter("search[order]", "count")
+            .addQueryParameter("limit", SUGGESTION_LIMIT.toString())
+            .build()
+
+    internal fun parseSuggestions(json: String): List<TagSuggestion> {
+        val arr = JSONArray(json)
+        return (0 until arr.length()).mapNotNull { i ->
+            val tag = arr.optJSONObject(i) ?: return@mapNotNull null
+            val name = tag.stringOrNull("name") ?: return@mapNotNull null
+            if (DanbooruTags.isForbiddenName(name)) null else TagSuggestion(name, tag.optInt("post_count"))
+        }
+    }
+
+    /** Most used Danbooru tags starting with [word], for autocomplete while typing. */
+    suspend fun suggestTags(http: Http, word: String): List<TagSuggestion> {
+        if (word.isBlank() || DanbooruTags.isForbiddenName(word)) return emptyList()
+        return parseSuggestions(http.getText(suggestionsUrl(word), headers))
+    }
 
     override suspend fun fetchPost(http: Http, settings: Settings): ImagePost {
         val url = requestUrl(DanbooruTags.sanitize(settings.danbooruTags), settings.nsfwMode)
         repeat(MAX_REQUESTS) {
             val posts = JSONArray(http.getText(url, headers))
             if (posts.length() == 0) throw NoImageException("No Danbooru posts match these tags")
-            firstSuitable(posts)?.let { return it }
+            firstSuitable(posts, Blacklist.parse(settings.blacklistTags))?.let { return it }
         }
-        throw NoImageException("Could not find a suitable Danbooru post")
+        throw NoImageException("No displayable Danbooru image found for these tags")
     }
 }

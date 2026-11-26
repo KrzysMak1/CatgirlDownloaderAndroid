@@ -72,8 +72,21 @@
 
     <string name="danbooru_settings">Ustawienia Danbooru</string>
     <string name="danbooru_tags_title">Tagi wyszukiwania</string>
-    <string name="danbooru_tags_desc">Wpisz tagi oddzielone spacjami (np. cat_ears solo)</string>
-    <string name="danbooru_tags_placeholder">np. cat_ears solo 1girl</string>
+    <string name="danbooru_tags_help">Oddzielaj tagi spacjami, a tagi z kilku słów pisz z podkreślnikami (cat_ears, nie „cat ears”). Minus przed tagiem go wyklucza (-cat_ears). Bez konta Danbooru możesz użyć najwyżej dwóch tagów.</string>
+    <string name="danbooru_tags_placeholder">np. cat_ears solo</string>
+    <string name="danbooru_tag_counter">Tagi: %1$d/%2$d</string>
+    <string name="danbooru_too_many_tags">Za dużo tagów bez konta</string>
+    <plurals name="image_count">
+        <item quantity="one">%s obraz</item>
+        <item quantity="few">%s obrazy</item>
+        <item quantity="many">%s obrazów</item>
+        <item quantity="other">%s obrazu</item>
+    </plurals>
+    <string name="pref_blacklist">Czarna lista tagów</string>
+    <string name="blacklist_help">Obrazy z którymkolwiek z tych tagów są pomijane. Oddzielaj tagi spacjami (np. glasses red_hair). Działa w źródłach Catgirl, Waifu i Danbooru; Kitsune (nekos.best) nie podaje tagów.</string>
+    <string name="blacklist_placeholder">np. glasses red_hair</string>
+    <string name="tag_conflict_title">Konflikt tagów</string>
+    <string name="tag_conflict_body">Te tagi są jednocześnie w wyszukiwaniu Danbooru i na czarnej liście: %1$s.\n\nDanbooru nie znajdzie żadnych obrazów, dopóki nie usuniesz ich z jednego z tych miejsc.</string>
     <string name="danbooru_forbidden_body">Z powodu ograniczeń Danbooru niektóre tagi zostały automatycznie usunięte z ustawień. Więcej informacji znajdziesz na stronie pomocy Danbooru o „ocenzurowanych tagach”.</string>
     <string name="danbooru_forbidden_link">Otwórz stronę pomocy</string>
 </resources>

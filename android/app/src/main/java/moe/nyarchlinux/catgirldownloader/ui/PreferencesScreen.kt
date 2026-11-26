@@ -14,6 +14,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.RestartAlt
+import androidx.compose.material.icons.outlined.Block
 import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material.icons.outlined.HighQuality
 import androidx.compose.material.icons.outlined.Sell
@@ -68,6 +69,7 @@ fun PreferencesScreen(
     settings: Settings,
     onBack: () -> Unit,
     onEditDanbooruTags: () -> Unit,
+    onEditBlacklist: () -> Unit,
 ) {
     var nsfwDialog by rememberSaveable { mutableStateOf(false) }
     var intervalDialog by rememberSaveable { mutableStateOf(false) }
@@ -129,6 +131,15 @@ fun PreferencesScreen(
                 supportingContent = { Text(stringResource(R.string.pref_original_quality_desc)) },
                 trailingContent = {
                     Switch(checked = settings.originalQuality, onCheckedChange = vm::setOriginalQuality)
+                },
+            )
+
+            ListItem(
+                modifier = Modifier.clickable(onClick = onEditBlacklist),
+                leadingContent = { Icon(Icons.Outlined.Block, contentDescription = null) },
+                headlineContent = { Text(stringResource(R.string.pref_blacklist)) },
+                supportingContent = {
+                    Text(settings.blacklistTags.ifBlank { stringResource(R.string.pref_danbooru_tags_none) })
                 },
             )
 

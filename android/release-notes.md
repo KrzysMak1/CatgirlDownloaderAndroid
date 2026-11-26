@@ -1,21 +1,32 @@
-**Catgirl Downloader for Android 1.0.1** (Android 12+). Installs over 1.0.0.
+**Catgirl Downloader for Android 1.1.0** (Android 12+). Installs over 1.0.x.
 
-### Fixed
-- Sometimes the next image took a long time to appear, even after staying on the previous one for a
-  while. This happened when the server was slow or the background download stalled. Now, if the
-  preloaded image isn't ready within 1.5 s of tapping, a fresh download starts in parallel and
-  whichever finishes first is shown; the other one becomes the next preloaded image.
-- A failed background preload is retried right away instead of waiting for the next tap.
-- Stalled connections are detected after 15 s without data instead of 30 s.
+Brings over two improvements proposed for the desktop app
+([NyarchLinux/CatgirlDownloader#23](https://github.com/NyarchLinux/CatgirlDownloader/pull/23) and
+[#18](https://github.com/NyarchLinux/CatgirlDownloader/pull/18)).
+
+### New
+- **Danbooru tag suggestions:** while typing, the most used matching tags appear with their image
+  counts; tap one to insert it (an exclusion `-` is kept).
+- **Tag counter and help:** shows how many tags you use out of the 2 Danbooru allows without an
+  account, and explains underscores and `-tag` exclusions.
+- **Blacklisted tags** (Preferences): images with any of these tags are skipped in Catgirl, Waifu and
+  Danbooru. A warning appears if a tag is both searched for and blacklisted.
+- **Clearer errors:** Danbooru's own explanation is shown, e.g. when a search has too many tags.
+- Danbooru looks through 20 random posts per request instead of 5, so suitable images are found with
+  fewer requests.
 
 ---
 
-**Catgirl Downloader na Androida 1.0.1** (Android 12+). Instaluje się na wersję 1.0.0.
+**Catgirl Downloader na Androida 1.1.0** (Android 12+). Instaluje się na wersję 1.0.x.
 
-### Poprawki
-- Czasem trzeba było długo czekać na następny obraz, nawet po dłuższym oglądaniu poprzedniego.
-  Działo się tak, gdy serwer odpowiadał wolno albo pobieranie w tle się zawiesiło. Teraz, jeśli obraz
-  z tła nie jest gotowy w ciągu 1,5 s od tapnięcia, równolegle startuje nowe pobieranie i pokazany
-  zostaje ten, który przyjdzie pierwszy; drugi staje się kolejnym obrazem z wyprzedzeniem.
-- Nieudane pobieranie w tle jest od razu ponawiane, zamiast czekać na tapnięcie.
-- Zawieszone połączenie jest wykrywane po 15 s bez danych zamiast 30 s.
+Przenosi dwa ulepszenia zaproponowane dla aplikacji desktopowej (PR #23 i #18).
+
+### Nowości
+- **Podpowiedzi tagów Danbooru:** podczas pisania pojawiają się najpopularniejsze pasujące tagi z liczbą
+  obrazów; dotknij, aby wstawić (minus wykluczenia zostaje).
+- **Licznik tagów i pomoc:** pokazuje, ile tagów używasz z 2 dozwolonych bez konta, i wyjaśnia
+  podkreślniki oraz wykluczanie `-tag`.
+- **Czarna lista tagów** (Ustawienia): obrazy z tymi tagami są pomijane w źródłach Catgirl, Waifu
+  i Danbooru. Pojawi się ostrzeżenie, jeśli tag jest jednocześnie wyszukiwany i na czarnej liście.
+- **Czytelniejsze błędy:** pokazywane jest wyjaśnienie od Danbooru, np. przy zbyt wielu tagach.
+- Danbooru przegląda 20 losowych wpisów na zapytanie zamiast 5, więc rzadziej trzeba pytać ponownie.
