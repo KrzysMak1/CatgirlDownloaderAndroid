@@ -37,6 +37,8 @@ import moe.nyarchlinux.catgirldownloader.api.ImagePost
 import moe.nyarchlinux.catgirldownloader.api.NoImageException
 import moe.nyarchlinux.catgirldownloader.api.Sources
 import moe.nyarchlinux.catgirldownloader.api.describeError
+import moe.nyarchlinux.catgirldownloader.api.awaitWithin
+import moe.nyarchlinux.catgirldownloader.api.firstSuccess
 import moe.nyarchlinux.catgirldownloader.api.withRetry
 import moe.nyarchlinux.catgirldownloader.data.NsfwMode
 import moe.nyarchlinux.catgirldownloader.data.Settings
@@ -149,9 +151,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         loadJob = viewModelScope.launch {
             try {
                 val settings = repo.settings.value
-                val image = takePrefetched(settings) ?: fetchImage(settings)
+                val image = obtainImage(settings)
                 _state.update { it.copy(image = image) }
-                startPrefetch()
+                if (prefetch == null) startPrefetch()
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -166,22 +168,40 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    /** Returns the preloaded image if it matches [settings] and downloaded successfully. */
-    private suspend fun takePrefetched(settings: Settings): LoadedImage? {
-        val current = prefetch ?: return null
+    /**
+     * Gets the next image for [settings]. Uses the preloaded one when it is ready; if it is still
+     * downloading after [HEDGE_DELAY_MS] (slow or stalled server), a fresh download races it and
+     * whichever finishes first is shown. The other one keeps going and becomes the next preload.
+     */
+    private suspend fun obtainImage(settings: Settings): LoadedImage {
+        val key = settings.prefetchKey()
+        val pending = prefetch?.takeIf { it.key == key }?.image
+        if (pending == null) prefetch?.image?.cancel()
         prefetch = null
-        if (current.key != settings.prefetchKey()) {
-            current.image.cancel()
-            return null
-        }
-        return try {
-            current.image.await()
-        } catch (e: CancellationException) {
+        if (pending == null) return fetchImage(settings)
+
+        val early = awaitWithin(pending, HEDGE_DELAY_MS)
+        if (early != null) {
+            early.onSuccess { return it }
             currentCoroutineContext().ensureActive()
-            null
-        } catch (e: Exception) {
-            Log.w(TAG, "Preloading failed, fetching again", e)
-            null
+            Log.w(TAG, "Preloading failed, fetching again", early.exceptionOrNull())
+            return fetchImage(settings)
+        }
+
+        val fresh = preloadAsync(settings)
+        try {
+            val (image, winner) = firstSuccess(pending, fresh)
+            val loser = if (winner === pending) fresh else pending
+            // Keep the slower download as the next preloaded image instead of wasting it.
+            if (settings.preloadNext && !loser.isCancelled) {
+                prefetch = Prefetch(key, loser)
+            } else {
+                loser.cancel()
+            }
+            return image
+        } catch (e: CancellationException) {
+            fresh.cancel()
+            throw e
         }
     }
 
@@ -190,11 +210,31 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         prefetch = null
         val settings = repo.settings.value
         if (!settings.preloadNext) return
-        prefetch = Prefetch(
-            settings.prefetchKey(),
-            viewModelScope.async { fetchImage(settings).also { predecode(it) } },
-        )
+        prefetch = Prefetch(settings.prefetchKey(), preloadAsync(settings, retryRounds = 3))
     }
+
+    /**
+     * Downloads and pre-decodes an image in the background. With [retryRounds] > 1 a failed
+     * preload is started again (after a pause) instead of leaving nothing ready for the next tap.
+     */
+    private fun preloadAsync(settings: Settings, retryRounds: Int = 1): Deferred<LoadedImage> =
+        viewModelScope.async {
+            var round = 1
+            while (true) {
+                try {
+                    return@async fetchImage(settings).also { predecode(it) }
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    if (round >= retryRounds) throw e
+                    Log.w(TAG, "Preloading failed, trying again", e)
+                    round++
+                    delay(PRELOAD_RETRY_PAUSE_MS)
+                }
+            }
+            @Suppress("UNREACHABLE_CODE")
+            error("unreachable")
+        }
 
     /**
      * Decodes a preloaded image into Coil's memory cache at screen size (same cache key as the
@@ -385,5 +425,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private companion object {
         const val TAG = "CatgirlDownloader"
+
+        /** How long a tap waits for the preloaded image before also starting a fresh download. */
+        const val HEDGE_DELAY_MS = 1500L
+
+        /** Pause before a failed background preload is tried again. */
+        const val PRELOAD_RETRY_PAUSE_MS = 3000L
     }
 }
