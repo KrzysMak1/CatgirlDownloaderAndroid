@@ -91,9 +91,23 @@ jobs:
         env:
           RELEASE_TAG: ${{ steps.release.outputs.tag }}
         run: |
-          apksigner=$(ls -d "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
-          certs=$("$apksigner" verify --print-certs "dist/CatgirlDownloader-$VERSION.apk")
-          echo "$certs" | grep -E "Signer #1 certificate (DN|SHA-256)"
+          apk="dist/CatgirlDownloader-$VERSION.apk"
+          sdk="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
+          certs=""
+          # Newest build-tools first; skip any whose apksigner can't run on this JDK.
+          for signer in $(ls -d "$sdk"/build-tools/*/apksigner 2>/dev/null | sort -rV); do
+            if out=$("$signer" verify --print-certs "$apk" 2>&1); then
+              echo "Verified with $signer"
+              certs="$out"
+              break
+            fi
+            echo "$signer failed: $(echo "$out" | head -3)"
+          done
+          if [ -z "$certs" ]; then
+            echo "::error::Could not verify the APK signature (no working apksigner in $sdk/build-tools)."
+            exit 1
+          fi
+          echo "$certs" | grep -E "Signer #1 certificate (DN|SHA-256)" || true
           if [ -n "$RELEASE_TAG" ] && echo "$certs" | grep -q "CN=Android Debug"; then
             echo "::error::Release APK is signed with the debug key; not publishing."
             exit 1
