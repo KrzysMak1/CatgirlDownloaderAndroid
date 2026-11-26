@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material.icons.outlined.Sell
 import androidx.compose.material.icons.outlined.Shield
+import androidx.compose.material.icons.outlined.Speed
 import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material.icons.outlined.SaveAlt
 import androidx.compose.material3.AlertDialog
@@ -106,6 +107,16 @@ fun PreferencesScreen(
                 headlineContent = { Text(stringResource(R.string.pref_danbooru_tags)) },
                 supportingContent = {
                     Text(settings.danbooruTags.ifBlank { stringResource(R.string.pref_danbooru_tags_none) })
+                },
+            )
+
+            ListItem(
+                modifier = Modifier.clickable { vm.setPreloadNext(!settings.preloadNext) },
+                leadingContent = { Icon(Icons.Outlined.Speed, contentDescription = null) },
+                headlineContent = { Text(stringResource(R.string.pref_preload)) },
+                supportingContent = { Text(stringResource(R.string.pref_preload_desc)) },
+                trailingContent = {
+                    Switch(checked = settings.preloadNext, onCheckedChange = vm::setPreloadNext)
                 },
             )
 

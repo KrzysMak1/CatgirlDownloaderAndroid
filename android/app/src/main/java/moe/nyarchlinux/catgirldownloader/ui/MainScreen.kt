@@ -138,6 +138,7 @@ fun MainScreen(
         bottomBar = {
             ControlBar(
                 loading = state.loading,
+                saving = state.saving,
                 canSave = state.image != null,
                 autoReload = settings.autoReloadEnabled,
                 onAutoReloadChange = onAutoReloadChange,
@@ -186,6 +187,7 @@ fun MainScreen(
 @Composable
 private fun ControlBar(
     loading: Boolean,
+    saving: Boolean,
     canSave: Boolean,
     autoReload: Boolean,
     onAutoReloadChange: (Boolean) -> Unit,
@@ -235,10 +237,14 @@ private fun ControlBar(
             LabeledControl(stringResource(R.string.save), Modifier.weight(1f)) {
                 FilledTonalIconButton(
                     onClick = onSave,
-                    enabled = canSave,
+                    enabled = canSave && !saving,
                     modifier = Modifier.size(52.dp),
                 ) {
-                    Icon(Icons.Filled.Download, contentDescription = stringResource(R.string.save))
+                    if (saving) {
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.5.dp)
+                    } else {
+                        Icon(Icons.Filled.Download, contentDescription = stringResource(R.string.save))
+                    }
                 }
             }
         }

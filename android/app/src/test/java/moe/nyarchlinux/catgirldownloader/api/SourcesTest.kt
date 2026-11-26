@@ -90,6 +90,20 @@ class SourcesTest {
         assertEquals("https://danbooru.donmai.us/posts/7", ok.link)
         assertEquals("danbooru_7.png", DanbooruSource.fileName(ok, "png"))
 
+        assertNull(ok.fullImageUrl)
+
+        // A smaller sample is shown; the original is kept for saving.
+        val sampled = DanbooruSource.parsePost(
+            post("1girl").put("large_file_url", "https://cdn/sample/sample-x.jpg"),
+        )!!
+        assertEquals("https://cdn/sample/sample-x.jpg", sampled.imageUrl)
+        assertEquals("https://cdn/x.png", sampled.fullImageUrl)
+        assertEquals("png", sampled.fullImageExtension)
+        // Sample equal to the original (small images) means there is nothing extra to fetch.
+        val same = DanbooruSource.parsePost(post("1girl").put("large_file_url", "https://cdn/x.png"))!!
+        assertEquals("https://cdn/x.png", same.imageUrl)
+        assertNull(same.fullImageUrl)
+
         assertNull(DanbooruSource.parsePost(post("1girl $forbiddenA")))
         assertNull(DanbooruSource.parsePost(post("1girl", ext = "mp4")))
         assertNull(DanbooruSource.parsePost(post("1girl", url = null)))

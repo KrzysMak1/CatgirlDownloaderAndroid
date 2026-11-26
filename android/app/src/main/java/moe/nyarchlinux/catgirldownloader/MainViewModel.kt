@@ -8,7 +8,11 @@ import androidx.annotation.StringRes
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -39,11 +43,16 @@ class LoadedImage(
     /** Width / height of the image, or null if it couldn't be read up front. */
     val aspectRatio: Float?,
 ) {
-    val fileName: String get() = Sources.byId(sourceId).source.fileName(post, format.extension)
+    /** Format of the file that gets saved: the full-resolution original when one exists. */
+    val saveFormat: ImageFormat
+        get() = post.fullImageUrl?.let { ImageFormat.fromExtension(post.fullImageExtension) } ?: format
+
+    val fileName: String get() = Sources.byId(sourceId).source.fileName(post, saveFormat.extension)
 }
 
 data class MainUiState(
     val loading: Boolean = false,
+    val saving: Boolean = false,
     val image: LoadedImage? = null,
 )
 
@@ -73,6 +82,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private var inForeground = false
     private var loadCounter = 0L
 
+    /** Next image downloaded in the background, valid only for the settings it was fetched with. */
+    private var prefetch: Prefetch? = null
+
+    /** Image the "save as" picker was opened for (auto reload may replace the shown one meanwhile). */
+    private var pendingSave: LoadedImage? = null
+
+    private class Prefetch(val key: PrefetchKey, val image: Deferred<LoadedImage>)
+
+    private data class PrefetchKey(val sourceId: String, val nsfw: NsfwMode, val tags: String)
+
+    private fun Settings.prefetchKey() = PrefetchKey(sourceId, nsfwMode, danbooruTags)
+
     init {
         // Re-arm the auto-reload timer whenever the switch or interval changes (from any screen).
         viewModelScope.launch {
@@ -82,6 +103,23 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 .drop(1)
                 .collect { (enabled, _) ->
                     if (enabled && !_state.value.loading) scheduleAutoReload() else if (!enabled) cancelAutoReload()
+                }
+        }
+        // Drop the preloaded image as soon as it no longer matches the source / filters.
+        viewModelScope.launch {
+            repo.settings
+                .map { it.prefetchKey() to it.preloadNext }
+                .distinctUntilChanged()
+                .drop(1)
+                .collect { (key, enabled) ->
+                    val current = prefetch
+                    if (current != null && (!enabled || current.key != key)) {
+                        current.image.cancel()
+                        prefetch = null
+                    }
+                    if (enabled && prefetch == null && !_state.value.loading && _state.value.image != null) {
+                        startPrefetch()
+                    }
                 }
         }
         reload()
@@ -96,8 +134,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _state.update { it.copy(loading = true) }
         loadJob = viewModelScope.launch {
             try {
-                val image = fetchImage(repo.settings.value)
+                val settings = repo.settings.value
+                val image = takePrefetched(settings) ?: fetchImage(settings)
                 _state.update { it.copy(image = image) }
+                startPrefetch()
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -110,6 +150,33 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 }
             }
         }
+    }
+
+    /** Returns the preloaded image if it matches [settings] and downloaded successfully. */
+    private suspend fun takePrefetched(settings: Settings): LoadedImage? {
+        val current = prefetch ?: return null
+        prefetch = null
+        if (current.key != settings.prefetchKey()) {
+            current.image.cancel()
+            return null
+        }
+        return try {
+            current.image.await()
+        } catch (e: CancellationException) {
+            currentCoroutineContext().ensureActive()
+            null
+        } catch (e: Exception) {
+            Log.w(TAG, "Preloading failed, fetching again", e)
+            null
+        }
+    }
+
+    private fun startPrefetch() {
+        prefetch?.image?.cancel()
+        prefetch = null
+        val settings = repo.settings.value
+        if (!settings.preloadNext) return
+        prefetch = Prefetch(settings.prefetchKey(), viewModelScope.async { fetchImage(settings) })
     }
 
     private suspend fun fetchImage(settings: Settings): LoadedImage {
@@ -152,6 +219,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setAutoSave(enabled: Boolean) = repo.update { it.copy(autoSaveEnabled = enabled) }
 
+    fun setPreloadNext(enabled: Boolean) = repo.update { it.copy(preloadNext = enabled) }
+
     /** Stores sanitized tags; returns true if forbidden tags had to be removed. */
     fun setDanbooruTags(raw: String): Boolean {
         val sanitized = DanbooruTags.sanitize(raw)
@@ -189,10 +258,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val tree = settings.downloadTreeUri?.let(Uri::parse)
             ?.takeIf { ImageSaver.hasTreeAccess(getApplication(), it) }
         if (settings.autoSaveEnabled) {
+            if (_state.value.saving) return
             viewModelScope.launch {
+                _state.update { it.copy(saving = true) }
                 val result = runCatching {
-                    ImageSaver.saveToFolder(getApplication(), tree, image.fileName, image.format.mimeType, image.bytes)
+                    val (bytes, format) = bytesForSaving(image)
+                    val name = Sources.byId(image.sourceId).source.fileName(image.post, format.extension)
+                    ImageSaver.saveToFolder(getApplication(), tree, name, format.mimeType, bytes)
                 }
+                _state.update { it.copy(saving = false) }
                 _events.send(
                     result.fold(
                         onSuccess = { UiEvent.Message(R.string.saved_to, it) },
@@ -204,17 +278,39 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 )
             }
         } else {
-            val request = SaveRequest(image.fileName, image.format.mimeType, tree?.let(ImageSaver::treeDocumentUri))
+            pendingSave = image
+            val request = SaveRequest(image.fileName, image.saveFormat.mimeType, tree?.let(ImageSaver::treeDocumentUri))
             _events.trySend(UiEvent.AskSaveLocation(request))
         }
     }
 
     fun saveToUri(uri: Uri) {
-        val image = _state.value.image ?: return
+        val image = pendingSave ?: _state.value.image ?: return
+        pendingSave = null
         viewModelScope.launch {
-            val result = runCatching { ImageSaver.writeToUri(getApplication(), uri, image.bytes) }
+            _state.update { it.copy(saving = true) }
+            val result = runCatching { ImageSaver.writeToUri(getApplication(), uri, bytesForSaving(image).first) }
+            _state.update { it.copy(saving = false) }
             result.exceptionOrNull()?.let { Log.w(TAG, "Saving failed", it) }
             _events.send(UiEvent.Message(if (result.isSuccess) R.string.saved else R.string.save_failed))
+        }
+    }
+
+    /**
+     * Bytes to save: the full-resolution original when only a preview was shown,
+     * falling back to the shown preview if the original can't be downloaded.
+     */
+    private suspend fun bytesForSaving(image: LoadedImage): Pair<ByteArray, ImageFormat> {
+        val fullUrl = image.post.fullImageUrl ?: return image.bytes to image.format
+        return try {
+            val download = app.http.getBytes(fullUrl.toHttpUrl(), Sources.byId(image.sourceId).source.imageHeaders)
+            val format = ImageFormat.detect(download.bytes, download.contentType, fullUrl) ?: image.saveFormat
+            download.bytes to format
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.w(TAG, "Original download failed, saving the preview", e)
+            image.bytes to image.format
         }
     }
 

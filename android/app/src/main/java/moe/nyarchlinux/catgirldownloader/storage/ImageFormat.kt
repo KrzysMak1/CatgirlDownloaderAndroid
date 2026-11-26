@@ -32,9 +32,11 @@ data class ImageFormat(val extension: String, val mimeType: String) {
             return known.firstOrNull { it.mimeType == mime }
         }
 
-        private fun fromUrl(url: String?): ImageFormat? {
-            val ext = url?.substringBefore('?')?.substringAfterLast('/')
-                ?.substringAfterLast('.', "")?.lowercase() ?: return null
+        private fun fromUrl(url: String?): ImageFormat? =
+            fromExtension(url?.substringBefore('?')?.substringAfterLast('/')?.substringAfterLast('.', ""))
+
+        fun fromExtension(extension: String?): ImageFormat? {
+            val ext = extension?.lowercase() ?: return null
             if (ext == "jpeg") return JPEG
             return known.firstOrNull { it.extension == ext }
         }

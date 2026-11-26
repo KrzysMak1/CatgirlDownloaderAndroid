@@ -10,6 +10,10 @@ data class ImagePost(
     val id: String,
     val artist: String?,
     val link: String?,
+    /** Full-resolution file to save when [imageUrl] is a smaller preview (Danbooru samples). */
+    val fullImageUrl: String? = null,
+    /** File extension of [fullImageUrl], if known. */
+    val fullImageExtension: String? = null,
 )
 
 class NoImageException(message: String) : IOException(message)

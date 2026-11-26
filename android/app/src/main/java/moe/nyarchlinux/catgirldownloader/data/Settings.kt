@@ -22,6 +22,8 @@ data class Settings(
     /** Storage Access Framework tree URI chosen by the user, or null for Pictures/CatgirlDownloader. */
     val downloadTreeUri: String? = null,
     val autoSaveEnabled: Boolean = false,
+    /** Download the next image in the background so "new image" shows it instantly. */
+    val preloadNext: Boolean = true,
 ) {
     companion object {
         const val DEFAULT_SOURCE = "catgirl"
@@ -63,6 +65,7 @@ class SettingsRepository(context: Context) {
             danbooruTags = prefs.getString(KEY_DANBOORU_TAGS, null) ?: defaults.danbooruTags,
             downloadTreeUri = prefs.getString(KEY_DOWNLOAD_TREE, null),
             autoSaveEnabled = prefs.getBoolean(KEY_AUTO_SAVE, defaults.autoSaveEnabled),
+            preloadNext = prefs.getBoolean(KEY_PRELOAD, defaults.preloadNext),
         )
     }
 
@@ -75,6 +78,7 @@ class SettingsRepository(context: Context) {
             .putString(KEY_DANBOORU_TAGS, s.danbooruTags)
             .putString(KEY_DOWNLOAD_TREE, s.downloadTreeUri)
             .putBoolean(KEY_AUTO_SAVE, s.autoSaveEnabled)
+            .putBoolean(KEY_PRELOAD, s.preloadNext)
             .apply()
     }
 
@@ -86,5 +90,6 @@ class SettingsRepository(context: Context) {
         const val KEY_DANBOORU_TAGS = "danbooru_tags"
         const val KEY_DOWNLOAD_TREE = "download_tree_uri"
         const val KEY_AUTO_SAVE = "auto_save_enabled"
+        const val KEY_PRELOAD = "preload_next"
     }
 }

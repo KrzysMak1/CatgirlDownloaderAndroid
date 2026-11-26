@@ -27,6 +27,9 @@ Requirements: **Android 12 (API 31) or newer**, internet access.
   - default folder `Pictures/CatgirlDownloader`, which needs no storage permission;
   - or any folder you pick in *Preferences*;
   - with *Auto save* off, the save button opens the system "Save as" picker.
+- **Fast loading**: the next image is downloaded in the background while you look at the current one
+  (can be turned off in *Preferences* to save data). Danbooru shows a lighter preview and downloads the
+  full-resolution original only when you save.
 - Pinch-to-zoom and double-tap zoom, animated GIF/WebP support.
 - Material You colors from your wallpaper, light and dark theme, themed launcher icon (Android 13+).
 - English and Polish interface.

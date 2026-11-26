@@ -71,8 +71,15 @@ object DanbooruSource : ImageSource {
         val ext = post.stringOrNull("file_ext")?.lowercase()
         if (ext != null && ext !in displayableExtensions) return null
         val postId = post.stringOrNull("id") ?: return null
+        // The sample (~850px) is far smaller than the original and loads much faster;
+        // the original is only downloaded when the image is saved.
+        val sampleUrl = post.stringOrNull("large_file_url")
+            ?.takeIf { url -> displayableExtensions.any { url.substringBefore('?').endsWith(".$it", ignoreCase = true) } }
+        val useSample = sampleUrl != null && sampleUrl != fileUrl
         return ImagePost(
-            imageUrl = fileUrl,
+            imageUrl = if (useSample) sampleUrl!! else fileUrl,
+            fullImageUrl = if (useSample) fileUrl else null,
+            fullImageExtension = if (useSample) ext else null,
             id = postId,
             artist = post.stringOrNull("tag_string_artist")?.split(' ')?.firstOrNull { it.isNotEmpty() },
             link = "$ENDPOINT/posts/$postId",

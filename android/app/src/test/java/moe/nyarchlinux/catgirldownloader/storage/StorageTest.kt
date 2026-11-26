@@ -24,6 +24,14 @@ class StorageTest {
     }
 
     @Test
+    fun formatFromExtension() {
+        assertEquals(ImageFormat.JPEG, ImageFormat.fromExtension("JPEG"))
+        assertEquals(ImageFormat.PNG, ImageFormat.fromExtension("png"))
+        assertNull(ImageFormat.fromExtension("mp4"))
+        assertNull(ImageFormat.fromExtension(null))
+    }
+
+    @Test
     fun uniqueNameAppendsCounter() {
         val existing = setOf("a.png", "a-1.png", "noext")
         assertEquals("b.png", ImageSaver.uniqueName("b.png") { it in existing })
