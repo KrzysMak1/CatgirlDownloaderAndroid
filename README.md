@@ -62,8 +62,12 @@ android/app/src/main/java/moe/nyarchlinux/catgirldownloader/
 ## Releases and signing
 
 The [`Android`](.github/workflows/android.yml) GitHub workflow runs the unit tests and builds the APK on every
-push. To publish a release with the APK attached, either push a tag that starts with `v` (for example
-`v0.5`), or open **Actions → Android → Run workflow** and enter the release tag.
+push. Releases with the APK attached are published automatically:
+
+- on a push to `master`, as `v<versionName>` (from `android/app/build.gradle.kts`) if that release does not
+  exist yet, so **bump `versionName` and `versionCode` to publish a new version**;
+- when a tag starting with `v` is pushed;
+- or manually from **Actions → Android → Run workflow** with a release tag.
 
 By default the release APK is signed with a temporary debug key. To sign it with your own key, so that
 users can update the app without uninstalling it first, add these repository secrets:
