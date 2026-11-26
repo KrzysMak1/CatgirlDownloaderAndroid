@@ -30,8 +30,16 @@
     <string name="open_source">Otwórz źródło</string>
     <string name="close">Zamknij</string>
 
-    <string name="about_version">Wersja %1$s</string>
-    <string name="about_body">Tworzone przez zespół Nyarch Linux.\nDeweloperzy: SilverOS\n© 2026 SilverOS\n\nNa licencji GNU General Public License w wersji 3.0 lub nowszej.</string>
+    <string name="about_version">Wersja %1$s · Android</string>
+    <string name="about_port_title">Port na Androida</string>
+    <string name="about_port_body">Nieoficjalny port na Androida 12+, napisany od nowa w Kotlinie z Jetpack Compose i Material 3.\nAutor portu: KrzysMak1</string>
+    <string name="about_original_title">Oryginalna aplikacja</string>
+    <string name="about_original_body">Catgirl Downloader na Linuksa (GTK4)\nod zespołu Nyarch Linux\nDeweloper: SilverOS · © 2026 SilverOS</string>
+    <string name="about_images_title">Obrazy</string>
+    <string name="about_images_body">nekos.moe, waifu.im, Danbooru i nekos.best. Obrazy należą do ich autorów.</string>
+    <string name="about_license">Na licencji GNU General Public License w wersji 3.0 lub nowszej.</string>
+    <string name="about_port_source">Kod źródłowy portu</string>
+    <string name="about_original_source">Oryginalny projekt</string>
 
     <string name="back">Wstecz</string>
     <string name="pref_group_content">Treści</string>

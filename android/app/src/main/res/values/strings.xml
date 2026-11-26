@@ -40,8 +40,16 @@
     <string name="close">Close</string>
 
     <!-- About -->
-    <string name="about_version">Version %1$s</string>
-    <string name="about_body">Developed by the Nyarch Linux developers team.\nDevelopers: SilverOS\n© 2026 SilverOS\n\nLicensed under the GNU General Public License v3.0 or later.</string>
+    <string name="about_version">Version %1$s · Android</string>
+    <string name="about_port_title">Android port</string>
+    <string name="about_port_body">Unofficial port for Android 12+, rewritten from scratch in Kotlin with Jetpack Compose and Material 3.\nPort by KrzysMak1</string>
+    <string name="about_original_title">Original app</string>
+    <string name="about_original_body">Catgirl Downloader for Linux (GTK4)\nby the Nyarch Linux developers team\nDeveloper: SilverOS · © 2026 SilverOS</string>
+    <string name="about_images_title">Images</string>
+    <string name="about_images_body">nekos.moe, waifu.im, Danbooru and nekos.best. Images belong to their artists.</string>
+    <string name="about_license">Licensed under the GNU General Public License v3.0 or later.</string>
+    <string name="about_port_source">Port source code</string>
+    <string name="about_original_source">Original project</string>
 
     <!-- Preferences -->
     <string name="back">Back</string>

@@ -1,6 +1,15 @@
 package moe.nyarchlinux.catgirldownloader.ui
 
 import androidx.compose.foundation.Image
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.Alignment
+import androidx.compose.material3.Icon
+import androidx.compose.material.icons.automirrored.outlined.OpenInNew
+import androidx.compose.material.icons.outlined.Code
+import androidx.compose.material.icons.Icons
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
@@ -65,31 +74,74 @@ private fun LabeledValue(label: String, value: String) {
     }
 }
 
+private const val PORT_REPO = "https://github.com/KrzysMak1/CatgirlDownloaderAndroid"
+private const val ORIGINAL_REPO = "https://github.com/NyarchLinux/CatgirlDownloader"
+
 @Composable
 fun AboutDialog(onDismiss: () -> Unit) {
+    val uriHandler = LocalUriHandler.current
     AlertDialog(
         onDismissRequest = onDismiss,
         icon = {
-            Image(painterResource(R.drawable.source_catgirl), contentDescription = null, modifier = Modifier.size(72.dp))
+            Image(
+                painterResource(R.drawable.source_catgirl),
+                contentDescription = null,
+                modifier = Modifier
+                    .size(72.dp)
+                    .clip(RoundedCornerShape(18.dp)),
+            )
         },
-        title = { Text(stringResource(R.string.app_name)) },
-        text = {
-            Column(Modifier.verticalScroll(rememberScrollState())) {
+        title = {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(stringResource(R.string.app_name), textAlign = TextAlign.Center)
                 Text(
                     stringResource(R.string.about_version, BuildConfig.VERSION_NAME),
                     style = MaterialTheme.typography.labelLarge,
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+            }
+        },
+        text = {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+            ) {
+                AboutSection(R.string.about_port_title, R.string.about_port_body)
+                AboutSection(R.string.about_original_title, R.string.about_original_body)
+                AboutSection(R.string.about_images_title, R.string.about_images_body)
                 Text(
-                    stringResource(R.string.about_body),
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center,
+                    stringResource(R.string.about_license),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+                Column(Modifier.fillMaxWidth()) {
+                    TextButton(onClick = { runCatching { uriHandler.openUri(PORT_REPO) } }) {
+                        Icon(Icons.Outlined.Code, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text(stringResource(R.string.about_port_source))
+                    }
+                    TextButton(onClick = { runCatching { uriHandler.openUri(ORIGINAL_REPO) } }) {
+                        Icon(Icons.AutoMirrored.Outlined.OpenInNew, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text(stringResource(R.string.about_original_source))
+                    }
+                }
             }
         },
         confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.close)) } },
     )
+}
+
+@Composable
+private fun AboutSection(title: Int, body: Int) {
+    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Text(
+            stringResource(title),
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.primary,
+        )
+        Text(stringResource(body), style = MaterialTheme.typography.bodyMedium)
+    }
 }
 
 /** Desktop Danbooru preferences window: free-text tag search. */
