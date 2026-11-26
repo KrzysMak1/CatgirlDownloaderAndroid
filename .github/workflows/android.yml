@@ -35,18 +35,46 @@ jobs:
       - name: Unit tests
         run: ./gradlew --no-daemon testDebugUnitTest
 
-      # Optional: sign with your own key. Add the secrets ANDROID_KEYSTORE_BASE64,
-      # ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS and ANDROID_KEY_PASSWORD.
-      # Without them the APK is signed with a temporary debug key.
+      # Release tag: a pushed v* tag, the manual input, or v<versionName> on pushes to master
+      # (only if that release doesn't exist yet: published releases are never overwritten,
+      # so bump versionName/versionCode to release a new version).
+      - name: Decide release tag
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          INPUT_TAG: ${{ inputs.release_tag }}
+        run: |
+          version=$(grep -oP 'versionName = "\K[^"]+' app/build.gradle.kts)
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+          tag=""
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            tag="$GITHUB_REF_NAME"
+          elif [ -n "$INPUT_TAG" ]; then
+            tag="$INPUT_TAG"
+          elif [ "$GITHUB_EVENT_NAME" = "push" ] && [ "$GITHUB_REF" = "refs/heads/master" ]; then
+            if ! gh release view "v$version" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+              tag="v$version"
+            fi
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "Release tag: ${tag:-<none, build only>}"
+
+      # Signing key from the secrets ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD,
+      # ANDROID_KEY_ALIAS and ANDROID_KEY_PASSWORD. Releases require it; plain CI builds
+      # (e.g. pull requests from forks) fall back to a debug key.
       - name: Prepare signing key
         env:
           KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
         run: |
           if [ -n "$KEYSTORE_BASE64" ]; then
             echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
             echo "ANDROID_KEYSTORE_FILE=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
+          elif [ -n "$RELEASE_TAG" ]; then
+            echo "::error::Signing secrets are missing; refusing to publish $RELEASE_TAG with a debug key."
+            exit 1
           else
-            echo "::warning::No signing secrets set; release APK is signed with a debug key."
+            echo "::warning::No signing secrets set; this build is signed with a debug key."
           fi
 
       - name: Build release APK
@@ -56,29 +84,20 @@ jobs:
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           ./gradlew --no-daemon assembleRelease
-          version=$(grep -oP 'versionName = "\K[^"]+' app/build.gradle.kts)
-          echo "VERSION=$version" >> "$GITHUB_ENV"
           mkdir -p dist
-          cp app/build/outputs/apk/release/app-release.apk "dist/CatgirlDownloader-$version.apk"
+          cp app/build/outputs/apk/release/app-release.apk "dist/CatgirlDownloader-$VERSION.apk"
 
-      # Release tag: a pushed v* tag, the manual input, or v<versionName> on pushes to master.
-      # Releases are published as pre-releases (the app is not marked stable yet); pushing to master
-      # again with the same versionName updates that pre-release with a fresh APK.
-      - name: Decide release tag
-        id: release
+      - name: Verify signature
         env:
-          GH_TOKEN: ${{ github.token }}
-          INPUT_TAG: ${{ inputs.release_tag }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
         run: |
-          tag=""
-          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
-            tag="$GITHUB_REF_NAME"
-          elif [ -n "$INPUT_TAG" ]; then
-            tag="$INPUT_TAG"
-          elif [ "$GITHUB_EVENT_NAME" = "push" ] && [ "$GITHUB_REF" = "refs/heads/master" ]; then
-            tag="v$VERSION"
+          apksigner=$(ls -d "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
+          certs=$("$apksigner" verify --print-certs "dist/CatgirlDownloader-$VERSION.apk")
+          echo "$certs" | grep -E "Signer #1 certificate (DN|SHA-256)"
+          if [ -n "$RELEASE_TAG" ] && echo "$certs" | grep -q "CN=Android Debug"; then
+            echo "::error::Release APK is signed with the debug key; not publishing."
+            exit 1
           fi
-          echo "tag=$tag" >> "$GITHUB_OUTPUT"
 
       - uses: actions/upload-artifact@v4
         with:
@@ -92,12 +111,7 @@ jobs:
           tag_name: ${{ steps.release.outputs.tag }}
           target_commitish: ${{ github.sha }}
           name: Catgirl Downloader ${{ steps.release.outputs.tag }}
-          prerelease: true
-          make_latest: false
+          prerelease: false
+          make_latest: true
           files: android/dist/*.apk
-          body: |
-            Pre-release (testing build) of Catgirl Downloader for Android 12+.
-            Built from ${{ github.sha }}.
-
-            Download `CatgirlDownloader-*.apk` below and open it on your phone to install
-            (allow installing apps from your browser or file manager when asked).
+          body_path: android/release-notes.md

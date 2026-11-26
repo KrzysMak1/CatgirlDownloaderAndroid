@@ -7,8 +7,10 @@ in Kotlin with Jetpack Compose and Material 3.
 
 ## Download
 
-Get `CatgirlDownloader-<version>.apk` from the [**Releases**](../../releases) page and open it on your phone.
-Current builds are **pre-releases** (testing versions), not yet a finished release. Android asks you to allow installing
+Get `CatgirlDownloader-<version>.apk` from the [**latest release**](../../releases/latest) and open it on
+your phone. Updates are signed with the same key, so new versions install over the old one.
+
+Coming from a 0.5.x pre-release? Uninstall it once first: pre-releases used a temporary signing key. Android asks you to allow installing
 apps from your browser or file manager the first time.
 
 Requirements: **Android 12 (API 31) or newer**, internet access.
@@ -67,27 +69,28 @@ android/app/src/main/java/moe/nyarchlinux/catgirldownloader/
 ## Releases and signing
 
 The [`Android`](.github/workflows/android.yml) GitHub workflow runs the unit tests and builds the APK on every
-push. Releases with the APK attached are published automatically, as **pre-releases**:
+push. Releases are published automatically:
 
-- on a push to `master`, as `v<versionName>` (from `android/app/build.gradle.kts`); pushing again with the
-  same version refreshes that pre-release's APK, so **bump `versionName` and `versionCode` for a new version**;
+- on a push to `master`, as `v<versionName>` (from `android/app/build.gradle.kts`) if that release does not
+  exist yet. Published releases are never overwritten, so **bump `versionName` and `versionCode` to
+  release a new version**, and update [`android/release-notes.md`](android/release-notes.md);
 - when a tag starting with `v` is pushed;
 - or manually from **Actions → Android → Run workflow** with a release tag.
 
-When the app is ready for a stable release, set `prerelease: false` (and `make_latest: true`) in the
-workflow's *Publish GitHub release* step, or edit the release on GitHub.
-
-By default the release APK is signed with a temporary debug key. To sign it with your own key, so that
-users can update the app without uninstalling it first, add these repository secrets:
+Release APKs are signed with the project's key, stored in these repository secrets:
 
 | Secret | Value |
 | --- | --- |
-| `ANDROID_KEYSTORE_BASE64` | your `.jks` keystore, base64-encoded (`base64 -w0 release.jks`) |
+| `ANDROID_KEYSTORE_BASE64` | the `.jks` keystore, base64-encoded (`base64 -w0 release.jks`) |
 | `ANDROID_KEYSTORE_PASSWORD` | keystore password |
 | `ANDROID_KEY_ALIAS` | key alias |
 | `ANDROID_KEY_PASSWORD` | key password |
 
-You can create a keystore with
+The workflow refuses to publish a release without them or with a debug-signed APK. Keep a backup of the
+keystore and its password: without them no further updates can be released. Builds without the secrets
+(e.g. pull requests from forks) are signed with a debug key and are not published.
+
+A keystore can be created with
 `keytool -genkeypair -v -keystore release.jks -keyalg RSA -keysize 4096 -validity 10000 -alias catgirldownloader`.
 
 ## Desktop version
