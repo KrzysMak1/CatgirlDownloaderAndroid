@@ -64,7 +64,7 @@ class SourcesTest {
         assertEquals("", DanbooruSource.buildTagsQuery("", NsfwMode.SHOW_EVERYTHING))
         val url = DanbooruSource.requestUrl("cat_ears", NsfwMode.BLOCK_NSFW)
         assertEquals("cat_ears rating:general", url.queryParameter("tags"))
-        assertEquals("1", url.queryParameter("limit"))
+        assertEquals("5", url.queryParameter("limit"))
         assertEquals("true", url.queryParameter("random"))
         assertNull(DanbooruSource.requestUrl("", NsfwMode.SHOW_EVERYTHING).queryParameter("tags"))
     }
@@ -107,6 +107,16 @@ class SourcesTest {
         assertNull(DanbooruSource.parsePost(post("1girl $forbiddenA")))
         assertNull(DanbooruSource.parsePost(post("1girl", ext = "mp4")))
         assertNull(DanbooruSource.parsePost(post("1girl", url = null)))
+    }
+
+    @Test
+    fun danbooruPicksFirstSuitablePostFromBatch() {
+        val batch = org.json.JSONArray()
+            .put(JSONObject().put("id", 1).put("tag_string", "solo $forbiddenB").put("file_url", "https://cdn/1.png").put("file_ext", "png"))
+            .put(JSONObject().put("id", 2).put("tag_string", "solo").put("file_url", "https://cdn/2.mp4").put("file_ext", "mp4"))
+            .put(JSONObject().put("id", 3).put("tag_string", "solo").put("file_url", "https://cdn/3.jpg").put("file_ext", "jpg"))
+        assertEquals("3", DanbooruSource.firstSuitable(batch)?.id)
+        assertNull(DanbooruSource.firstSuitable(org.json.JSONArray()))
     }
 
     @Test

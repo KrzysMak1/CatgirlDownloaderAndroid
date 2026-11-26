@@ -34,7 +34,9 @@ object DanbooruSource : ImageSource {
     override val filePrefix = "danbooru"
 
     private const val ENDPOINT = "https://danbooru.donmai.us"
-    private const val MAX_RETRIES = 5
+    /** Random posts fetched per request; the first suitable one is used. */
+    private const val BATCH_SIZE = 5
+    private const val MAX_REQUESTS = 3
 
     /** Danbooru posts can be videos or ugoira archives; only keep formats we can show. */
     private val displayableExtensions = setOf("png", "jpg", "jpeg", "gif", "webp", "avif")
@@ -57,7 +59,7 @@ object DanbooruSource : ImageSource {
 
     internal fun requestUrl(tags: String, nsfw: NsfwMode): HttpUrl {
         val builder = "$ENDPOINT/posts.json".toHttpUrl().newBuilder()
-            .addQueryParameter("limit", "1")
+            .addQueryParameter("limit", BATCH_SIZE.toString())
             .addQueryParameter("random", "true")
         val query = buildTagsQuery(tags, nsfw)
         if (query.isNotEmpty()) builder.addQueryParameter("tags", query)
@@ -86,13 +88,16 @@ object DanbooruSource : ImageSource {
         )
     }
 
+    internal fun firstSuitable(posts: JSONArray): ImagePost? =
+        (0 until posts.length()).firstNotNullOfOrNull { i -> posts.optJSONObject(i)?.let(::parsePost) }
+
     override suspend fun fetchPost(http: Http, settings: Settings): ImagePost {
         val url = requestUrl(DanbooruTags.sanitize(settings.danbooruTags), settings.nsfwMode)
-        repeat(MAX_RETRIES) {
+        repeat(MAX_REQUESTS) {
             val posts = JSONArray(http.getText(url, headers))
             if (posts.length() == 0) throw NoImageException("No Danbooru posts match these tags")
-            parsePost(posts.getJSONObject(0))?.let { return it }
+            firstSuitable(posts)?.let { return it }
         }
-        throw NoImageException("Could not find a suitable Danbooru post after $MAX_RETRIES attempts")
+        throw NoImageException("Could not find a suitable Danbooru post")
     }
 }

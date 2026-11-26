@@ -8,7 +8,14 @@ import androidx.annotation.StringRes
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CancellationException
+import coil.imageLoader
+import coil.request.ImageRequest
+import coil.size.Precision
+import coil.size.Scale
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.util.concurrent.atomic.AtomicLong
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.currentCoroutineContext
@@ -82,7 +89,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private var loadToken = 0
     private var autoReloadJob: Job? = null
     private var inForeground = false
-    private var loadCounter = 0L
+    private val loadCounter = AtomicLong()
 
     /** Next image downloaded in the background, valid only for the settings it was fetched with. */
     private var prefetch: Prefetch? = null
@@ -183,13 +190,32 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         prefetch = null
         val settings = repo.settings.value
         if (!settings.preloadNext) return
-        prefetch = Prefetch(settings.prefetchKey(), viewModelScope.async { fetchImage(settings) })
+        prefetch = Prefetch(
+            settings.prefetchKey(),
+            viewModelScope.async { fetchImage(settings).also { predecode(it) } },
+        )
+    }
+
+    /**
+     * Decodes a preloaded image into Coil's memory cache at screen size (same cache key as the
+     * on-screen request), so showing it later is a cache hit instead of a fresh decode.
+     */
+    private suspend fun predecode(image: LoadedImage) {
+        val metrics = app.resources.displayMetrics
+        val request = ImageRequest.Builder(app)
+            .data(image.bytes)
+            .memoryCacheKey(image.key)
+            .size(metrics.widthPixels, metrics.heightPixels)
+            .scale(Scale.FIT)
+            .precision(Precision.INEXACT)
+            .build()
+        app.imageLoader.execute(request)
     }
 
     /** Transient failures (rate limits, server or network errors) are retried while still loading. */
     private suspend fun fetchImage(settings: Settings): LoadedImage = withRetry { fetchImageOnce(settings) }
 
-    private suspend fun fetchImageOnce(settings: Settings): LoadedImage {
+    private suspend fun fetchImageOnce(settings: Settings): LoadedImage = withContext(Dispatchers.Default) {
         val entry = Sources.byId(settings.sourceId)
         val fetched = entry.source.fetchPost(app.http, settings)
         // In original quality mode, download the full-resolution file up front and show it.
@@ -201,8 +227,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val download = app.http.getBytes(post.imageUrl.toHttpUrl(), entry.source.imageHeaders)
         val format = ImageFormat.detect(download.bytes, download.contentType, post.imageUrl)
             ?: throw NoImageException("Unsupported image format at ${post.imageUrl}")
-        return LoadedImage(
-            "${entry.id}:${post.id}:${loadCounter++}", entry.id, post, download.bytes, format,
+        LoadedImage(
+            "${entry.id}:${post.id}:${loadCounter.getAndIncrement()}", entry.id, post, download.bytes, format,
             aspectRatio(download.bytes),
         )
     }

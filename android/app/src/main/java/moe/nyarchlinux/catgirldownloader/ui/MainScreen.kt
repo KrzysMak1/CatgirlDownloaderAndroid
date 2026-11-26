@@ -53,6 +53,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -387,7 +388,8 @@ private fun ZoomableImage(image: LoadedImage, onError: () -> Unit) {
             },
     ) {
         val ratio = image.aspectRatio
-        val shape = RoundedCornerShape(if (scale > 1f) 0.dp else 20.dp)
+        val zoomed by remember(image.key) { derivedStateOf { scale > 1f } }
+        val shape = RoundedCornerShape(if (zoomed) 0.dp else 20.dp)
         AsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
                 .data(image.bytes)

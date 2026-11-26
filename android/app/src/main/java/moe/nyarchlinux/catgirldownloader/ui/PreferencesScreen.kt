@@ -37,6 +37,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -152,7 +153,10 @@ fun PreferencesScreen(
                 modifier = Modifier.clickable { pickFolder.launch(null) },
                 leadingContent = { Icon(Icons.Outlined.Folder, contentDescription = null) },
                 headlineContent = { Text(stringResource(R.string.pref_download_folder)) },
-                supportingContent = { Text(vm.downloadFolderLabel(settings)) },
+                supportingContent = {
+                    val label = remember(settings.downloadTreeUri) { vm.downloadFolderLabel(settings) }
+                    Text(label)
+                },
                 trailingContent = if (vm.hasCustomDownloadFolder(settings)) {
                     {
                         IconButton(onClick = { vm.setDownloadFolder(null) }) {

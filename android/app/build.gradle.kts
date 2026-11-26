@@ -12,8 +12,8 @@ android {
         applicationId = "moe.nyarchlinux.catgirldownloader"
         minSdk = 31 // Android 12
         targetSdk = 35
-        versionCode = 6
-        versionName = "0.5.5"
+        versionCode = 7
+        versionName = "0.5.6"
     }
 
     // Release signing comes from environment variables (set from GitHub secrets in CI).
