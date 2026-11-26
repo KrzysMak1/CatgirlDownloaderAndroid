@@ -1,6 +1,20 @@
 package moe.nyarchlinux.catgirldownloader.ui
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.filled.Autorenew
+import androidx.compose.material.icons.outlined.Pets
+import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.Timer
+import androidx.compose.material3.FilledIconToggleButton
+import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.LargeFloatingActionButton
+import androidx.compose.material3.Surface
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.draw.shadow
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -25,13 +39,10 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -39,7 +50,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -102,8 +112,8 @@ fun MainScreen(
                     )
                 },
                 actions = {
-                    IconButton(onClick = onReload, enabled = !state.loading) {
-                        Icon(Icons.Filled.Refresh, contentDescription = stringResource(R.string.reload))
+                    IconButton(onClick = { showArtInfo = true }, enabled = state.image != null) {
+                        Icon(Icons.Outlined.Info, contentDescription = stringResource(R.string.about_art))
                     }
                     Box {
                         IconButton(onClick = { menuOpen = true }) {
@@ -111,16 +121,13 @@ fun MainScreen(
                         }
                         DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
                             DropdownMenuItem(
-                                text = { Text(stringResource(R.string.about_art)) },
-                                enabled = state.image != null,
-                                onClick = { menuOpen = false; showArtInfo = true },
-                            )
-                            DropdownMenuItem(
                                 text = { Text(stringResource(R.string.preferences)) },
+                                leadingIcon = { Icon(Icons.Outlined.Settings, contentDescription = null) },
                                 onClick = { menuOpen = false; onOpenPreferences() },
                             )
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.about)) },
+                                leadingIcon = { Icon(Icons.Outlined.Pets, contentDescription = null) },
                                 onClick = { menuOpen = false; showAbout = true },
                             )
                         }
@@ -129,43 +136,29 @@ fun MainScreen(
             )
         },
         bottomBar = {
-            BottomAppBar(
-                actions = {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(start = 12.dp),
-                    ) {
-                        Switch(checked = settings.autoReloadEnabled, onCheckedChange = onAutoReloadChange)
-                        Spacer(Modifier.width(12.dp))
-                        Text(stringResource(R.string.auto_reload), style = MaterialTheme.typography.bodyLarge)
-                    }
-                    IconButton(onClick = { showArtInfo = true }, enabled = state.image != null) {
-                        Icon(Icons.Outlined.Info, contentDescription = stringResource(R.string.about_art))
-                    }
-                },
-                floatingActionButton = {
-                    FloatingActionButton(
-                        onClick = { if (state.image != null) onSave() },
-                        containerColor = if (state.image != null) MaterialTheme.colorScheme.primaryContainer
-                        else MaterialTheme.colorScheme.surfaceContainerHighest,
-                        elevation = FloatingActionButtonDefaults.bottomAppBarFabElevation(),
-                    ) {
-                        Icon(Icons.Filled.Download, contentDescription = stringResource(R.string.save))
-                    }
-                },
+            ControlBar(
+                loading = state.loading,
+                canSave = state.image != null,
+                autoReload = settings.autoReloadEnabled,
+                onAutoReloadChange = onAutoReloadChange,
+                onReload = onReload,
+                onSave = onSave,
             )
         },
     ) { padding ->
         Box(
             modifier = Modifier
                 .padding(padding)
-                .fillMaxSize(),
+                .fillMaxSize()
+                .padding(horizontal = 12.dp, vertical = 8.dp),
             contentAlignment = Alignment.Center,
         ) {
             val image = state.image
             if (image != null) {
                 ZoomableImage(image = image, onError = onImageError)
-            } else if (!state.loading) {
+            } else if (state.loading) {
+                CircularProgressIndicator()
+            } else {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(
                         Icons.Outlined.Image,
@@ -177,16 +170,6 @@ fun MainScreen(
                     Text(stringResource(R.string.no_image), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
-            if (state.loading) {
-                Box(
-                    modifier = Modifier
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.85f))
-                        .padding(12.dp),
-                ) {
-                    CircularProgressIndicator()
-                }
-            }
         }
     }
 
@@ -196,6 +179,84 @@ fun MainScreen(
     }
     if (showAbout) {
         AboutDialog(onDismiss = { showAbout = false })
+    }
+}
+
+/** Bottom controls: auto reload on the left, a large "new image" button in the middle, save on the right. */
+@Composable
+private fun ControlBar(
+    loading: Boolean,
+    canSave: Boolean,
+    autoReload: Boolean,
+    onAutoReloadChange: (Boolean) -> Unit,
+    onReload: () -> Unit,
+    onSave: () -> Unit,
+) {
+    Surface(color = MaterialTheme.colorScheme.surfaceContainer) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            LabeledControl(stringResource(R.string.auto_reload_short), Modifier.weight(1f)) {
+                FilledIconToggleButton(
+                    checked = autoReload,
+                    onCheckedChange = onAutoReloadChange,
+                    modifier = Modifier.size(52.dp),
+                ) {
+                    Icon(
+                        if (autoReload) Icons.Filled.Autorenew else Icons.Outlined.Timer,
+                        contentDescription = stringResource(R.string.auto_reload),
+                    )
+                }
+            }
+
+            LargeFloatingActionButton(
+                onClick = { if (!loading) onReload() },
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+            ) {
+                if (loading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(36.dp),
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        strokeWidth = 3.dp,
+                    )
+                } else {
+                    Icon(
+                        Icons.Filled.Refresh,
+                        contentDescription = stringResource(R.string.new_image),
+                        modifier = Modifier.size(36.dp),
+                    )
+                }
+            }
+
+            LabeledControl(stringResource(R.string.save), Modifier.weight(1f)) {
+                FilledTonalIconButton(
+                    onClick = onSave,
+                    enabled = canSave,
+                    modifier = Modifier.size(52.dp),
+                ) {
+                    Icon(Icons.Filled.Download, contentDescription = stringResource(R.string.save))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun LabeledControl(label: String, modifier: Modifier, button: @Composable () -> Unit) {
+    Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+        button()
+        Spacer(Modifier.size(4.dp))
+        Text(
+            label,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 
@@ -278,7 +339,10 @@ fun SourceIcon(entry: SourceEntry, size: Int) {
     }
 }
 
-/** Fit-to-screen image with pinch-to-zoom, panning and double-tap zoom. */
+/**
+ * The image sized to its own aspect ratio with rounded corners, plus pinch-to-zoom,
+ * panning and double-tap zoom over the whole content area.
+ */
 @Composable
 private fun ZoomableImage(image: LoadedImage, onError: () -> Unit) {
     var scale by remember(image.key) { mutableFloatStateOf(1f) }
@@ -291,16 +355,11 @@ private fun ZoomableImage(image: LoadedImage, onError: () -> Unit) {
         return Offset(o.x.coerceIn(-maxX, maxX), o.y.coerceIn(-maxY, maxY))
     }
 
-    AsyncImage(
-        model = ImageRequest.Builder(LocalContext.current)
-            .data(image.bytes)
-            .memoryCacheKey(image.key)
-            .build(),
-        contentDescription = stringResource(R.string.image_description),
-        contentScale = ContentScale.Fit,
-        onError = { onError() },
+    Box(
+        contentAlignment = Alignment.Center,
         modifier = Modifier
             .fillMaxSize()
+            .clipToBounds()
             .onSizeChanged { size = it }
             .pointerInput(image.key) {
                 detectTapGestures(onDoubleTap = { tap ->
@@ -319,12 +378,28 @@ private fun ZoomableImage(image: LoadedImage, onError: () -> Unit) {
                     scale = (scale * zoom).coerceIn(1f, 6f)
                     offset = if (scale == 1f) Offset.Zero else clamp(offset + pan, scale)
                 }
-            }
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-                translationX = offset.x
-                translationY = offset.y
             },
-    )
+    ) {
+        val ratio = image.aspectRatio
+        val shape = RoundedCornerShape(if (scale > 1f) 0.dp else 20.dp)
+        AsyncImage(
+            model = ImageRequest.Builder(LocalContext.current)
+                .data(image.bytes)
+                .memoryCacheKey(image.key)
+                .build(),
+            contentDescription = stringResource(R.string.image_description),
+            contentScale = ContentScale.Fit,
+            onError = { onError() },
+            modifier = Modifier
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                    translationX = offset.x
+                    translationY = offset.y
+                }
+                .then(if (ratio != null) Modifier.aspectRatio(ratio) else Modifier.fillMaxSize())
+                .shadow(6.dp, shape)
+                .clip(shape),
+        )
+    }
 }

@@ -7,9 +7,10 @@
     <string name="choose_source">Wybierz źródło</string>
     <string name="source_settings">Ustawienia źródła</string>
 
-    <string name="reload">Odśwież</string>
     <string name="save">Zapisz</string>
     <string name="more_options">Więcej opcji</string>
+    <string name="auto_reload_short">Auto</string>
+    <string name="new_image">Nowy obraz</string>
     <string name="auto_reload">Automatyczne odświeżanie</string>
     <string name="about_art">O obrazie</string>
     <string name="preferences">Ustawienia</string>

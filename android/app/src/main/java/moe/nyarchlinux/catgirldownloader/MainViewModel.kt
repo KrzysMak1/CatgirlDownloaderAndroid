@@ -1,6 +1,7 @@
 package moe.nyarchlinux.catgirldownloader
 
 import android.app.Application
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.util.Log
 import androidx.annotation.StringRes
@@ -35,6 +36,8 @@ class LoadedImage(
     val post: ImagePost,
     val bytes: ByteArray,
     val format: ImageFormat,
+    /** Width / height of the image, or null if it couldn't be read up front. */
+    val aspectRatio: Float?,
 ) {
     val fileName: String get() = Sources.byId(sourceId).source.fileName(post, format.extension)
 }
@@ -115,7 +118,20 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val download = app.http.getBytes(post.imageUrl.toHttpUrl(), entry.source.imageHeaders)
         val format = ImageFormat.detect(download.bytes, download.contentType, post.imageUrl)
             ?: throw NoImageException("Unsupported image format at ${post.imageUrl}")
-        return LoadedImage("${entry.id}:${post.id}:${loadCounter++}", entry.id, post, download.bytes, format)
+        return LoadedImage(
+            "${entry.id}:${post.id}:${loadCounter++}", entry.id, post, download.bytes, format,
+            aspectRatio(download.bytes),
+        )
+    }
+
+    private fun aspectRatio(bytes: ByteArray): Float? {
+        val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeByteArray(bytes, 0, bytes.size, options)
+        return if (options.outWidth > 0 && options.outHeight > 0) {
+            options.outWidth.toFloat() / options.outHeight
+        } else {
+            null
+        }
     }
 
     fun onImageDisplayFailed() {

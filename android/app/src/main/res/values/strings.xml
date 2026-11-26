@@ -15,9 +15,10 @@
     <string name="source_settings">Source settings</string>
 
     <!-- Main screen -->
-    <string name="reload">Reload</string>
     <string name="save">Save</string>
     <string name="more_options">More options</string>
+    <string name="auto_reload_short">Auto</string>
+    <string name="new_image">New image</string>
     <string name="auto_reload">Auto reload</string>
     <string name="about_art">About art</string>
     <string name="preferences">Preferences</string>
