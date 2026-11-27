@@ -38,6 +38,7 @@ Requirements: **Android 12 (API 31) or newer**, internet access.
   automatically.
 - Pinch-to-zoom and double-tap zoom, animated GIF/WebP support.
 - Material You colors from your wallpaper, light and dark theme, themed launcher icon (Android 13+).
+- Custom background behind the images, with adjustable darkening.
 - English and Polish interface.
 
 Danbooru hides certain tags from anonymous users. The app strips those tags from your search and tells you

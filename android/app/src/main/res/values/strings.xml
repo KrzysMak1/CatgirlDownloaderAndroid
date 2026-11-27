@@ -72,6 +72,13 @@
     <string name="pref_preload_desc">Download the next image in the background so it appears instantly. Uses more data.</string>
     <string name="pref_original_quality">Original quality</string>
     <string name="pref_original_quality_desc">Load images, including the preloaded next one, in full resolution instead of a lighter preview (Danbooru). Slower and uses more data; nothing is saved to your device.</string>
+    <string name="pref_group_appearance">Appearance</string>
+    <string name="pref_background">Background</string>
+    <string name="pref_background_custom">Custom image · tap to change</string>
+    <string name="pref_background_none">Default · tap to choose an image</string>
+    <string name="pref_background_remove">Remove background</string>
+    <string name="pref_background_dim">Background darkening</string>
+    <string name="background_failed">Could not use this image as background</string>
     <string name="pref_auto_save">Auto save</string>
     <string name="pref_auto_save_desc">Save directly to the download folder instead of asking where to save</string>
     <string name="pref_danbooru_tags">Danbooru tags</string>

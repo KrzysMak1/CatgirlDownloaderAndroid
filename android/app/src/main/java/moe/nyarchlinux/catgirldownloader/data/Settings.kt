@@ -28,12 +28,18 @@ data class Settings(
     val originalQuality: Boolean = false,
     /** Space-separated tags; images with any of them are skipped (all sources that report tags). */
     val blacklistTags: String = "",
+    /** File name (in the app's private files) of a custom background behind the image, or null. */
+    val backgroundFile: String? = null,
+    /** How strongly the custom background is darkened, 0 (not at all) to [MAX_BACKGROUND_DIM]. */
+    val backgroundDim: Float = DEFAULT_BACKGROUND_DIM,
 ) {
     companion object {
         const val DEFAULT_SOURCE = "catgirl"
         const val DEFAULT_INTERVAL = 5
         const val MIN_INTERVAL = 1
         const val MAX_INTERVAL = 3600
+        const val DEFAULT_BACKGROUND_DIM = 0.4f
+        const val MAX_BACKGROUND_DIM = 0.9f
     }
 }
 
@@ -49,6 +55,7 @@ class SettingsRepository(context: Context) {
                 it.copy(
                     autoReloadIntervalSeconds = it.autoReloadIntervalSeconds
                         .coerceIn(Settings.MIN_INTERVAL, Settings.MAX_INTERVAL),
+                    backgroundDim = it.backgroundDim.coerceIn(0f, Settings.MAX_BACKGROUND_DIM),
                 )
             }
             write(updated)
@@ -72,6 +79,9 @@ class SettingsRepository(context: Context) {
             preloadNext = prefs.getBoolean(KEY_PRELOAD, defaults.preloadNext),
             originalQuality = prefs.getBoolean(KEY_ORIGINAL_QUALITY, defaults.originalQuality),
             blacklistTags = prefs.getString(KEY_BLACKLIST, null) ?: defaults.blacklistTags,
+            backgroundFile = prefs.getString(KEY_BACKGROUND, null),
+            backgroundDim = prefs.getFloat(KEY_BACKGROUND_DIM, defaults.backgroundDim)
+                .coerceIn(0f, Settings.MAX_BACKGROUND_DIM),
         )
     }
 
@@ -87,6 +97,8 @@ class SettingsRepository(context: Context) {
             .putBoolean(KEY_PRELOAD, s.preloadNext)
             .putBoolean(KEY_ORIGINAL_QUALITY, s.originalQuality)
             .putString(KEY_BLACKLIST, s.blacklistTags)
+            .putString(KEY_BACKGROUND, s.backgroundFile)
+            .putFloat(KEY_BACKGROUND_DIM, s.backgroundDim)
             .apply()
     }
 
@@ -101,5 +113,7 @@ class SettingsRepository(context: Context) {
         const val KEY_PRELOAD = "preload_next"
         const val KEY_ORIGINAL_QUALITY = "original_quality"
         const val KEY_BLACKLIST = "blacklist_tags"
+        const val KEY_BACKGROUND = "background_file"
+        const val KEY_BACKGROUND_DIM = "background_dim"
     }
 }

@@ -15,6 +15,8 @@ import coil.size.Scale
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.io.File
+import java.io.IOException
 import java.util.concurrent.atomic.AtomicLong
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
@@ -309,6 +311,43 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun setPreloadNext(enabled: Boolean) = repo.update { it.copy(preloadNext = enabled) }
 
     fun setOriginalQuality(enabled: Boolean) = repo.update { it.copy(originalQuality = enabled) }
+
+    /** Custom background file, if one is set and still present. */
+    fun backgroundFile(settings: Settings): File? =
+        settings.backgroundFile?.let { File(app.filesDir, it) }?.takeIf { it.isFile }
+
+    /**
+     * Copies the picked image into private storage (so it keeps working if the original is moved
+     * or deleted) and uses it as the background. A new file name each time refreshes Coil's cache.
+     */
+    fun setBackgroundImage(uri: Uri) {
+        viewModelScope.launch {
+            val name = "background_${System.currentTimeMillis()}"
+            val copied = runCatching {
+                withContext(Dispatchers.IO) {
+                    val input = app.contentResolver.openInputStream(uri) ?: throw IOException("Cannot open $uri")
+                    input.use { src -> File(app.filesDir, name).outputStream().use { src.copyTo(it) } }
+                }
+            }
+            if (copied.isFailure) {
+                Log.w(TAG, "Copying background failed", copied.exceptionOrNull())
+                File(app.filesDir, name).delete()
+                _events.send(UiEvent.Message(R.string.background_failed))
+                return@launch
+            }
+            val previous = repo.settings.value.backgroundFile
+            repo.update { it.copy(backgroundFile = name) }
+            previous?.let { withContext(Dispatchers.IO) { File(app.filesDir, it).delete() } }
+        }
+    }
+
+    fun clearBackground() {
+        val previous = repo.settings.value.backgroundFile ?: return
+        repo.update { it.copy(backgroundFile = null) }
+        viewModelScope.launch(Dispatchers.IO) { File(app.filesDir, previous).delete() }
+    }
+
+    fun setBackgroundDim(dim: Float) = repo.update { it.copy(backgroundDim = dim) }
 
     /** Stores the normalized blacklist; returns tags that are also in the Danbooru search. */
     fun setBlacklist(raw: String): List<String> {

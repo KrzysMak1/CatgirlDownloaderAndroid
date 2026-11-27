@@ -63,6 +63,13 @@
     <string name="pref_preload_desc">Pobiera kolejny obraz w tle, więc pojawia się od razu. Zużywa więcej danych.</string>
     <string name="pref_original_quality">Oryginalna jakość</string>
     <string name="pref_original_quality_desc">Wczytuje obrazy, także ten pobierany z wyprzedzeniem, w pełnej rozdzielczości zamiast lżejszego podglądu (Danbooru). Wolniej i więcej danych; nic nie jest zapisywane na urządzeniu.</string>
+    <string name="pref_group_appearance">Wygląd</string>
+    <string name="pref_background">Tło</string>
+    <string name="pref_background_custom">Własny obraz · dotknij, aby zmienić</string>
+    <string name="pref_background_none">Domyślne · dotknij, aby wybrać obraz</string>
+    <string name="pref_background_remove">Usuń tło</string>
+    <string name="pref_background_dim">Przyciemnienie tła</string>
+    <string name="background_failed">Nie udało się użyć tego obrazu jako tła</string>
     <string name="pref_auto_save">Automatyczny zapis</string>
     <string name="pref_auto_save_desc">Zapisuj od razu w folderze pobierania zamiast pytać o miejsce</string>
     <string name="pref_danbooru_tags">Tagi Danbooru</string>

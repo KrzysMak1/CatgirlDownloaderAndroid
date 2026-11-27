@@ -13,8 +13,6 @@ import androidx.compose.material3.FilledIconToggleButton
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.LargeFloatingActionButton
 import androidx.compose.material3.Surface
-import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.draw.shadow
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -53,7 +51,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -62,6 +59,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import java.io.File
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
@@ -96,6 +95,8 @@ fun MainScreen(
     onAutoReloadChange: (Boolean) -> Unit,
     onOpenPreferences: () -> Unit,
     onImageError: () -> Unit,
+    background: File? = null,
+    backgroundDim: Float = 0f,
 ) {
     var menuOpen by remember { mutableStateOf(false) }
     var showArtInfo by rememberSaveable { mutableStateOf(false) }
@@ -151,25 +152,44 @@ fun MainScreen(
         Box(
             modifier = Modifier
                 .padding(padding)
-                .fillMaxSize()
-                .padding(horizontal = 12.dp, vertical = 8.dp),
-            contentAlignment = Alignment.Center,
+                .fillMaxSize(),
         ) {
-            val image = state.image
-            if (image != null) {
-                ZoomableImage(image = image, onError = onImageError)
-            } else if (state.loading) {
-                CircularProgressIndicator()
-            } else {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(
-                        Icons.Outlined.Image,
-                        contentDescription = null,
-                        modifier = Modifier.size(64.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Spacer(Modifier.size(8.dp))
-                    Text(stringResource(R.string.no_image), color = MaterialTheme.colorScheme.onSurfaceVariant)
+            if (background != null) {
+                // User-chosen background behind the image, darkened as set in Preferences.
+                AsyncImage(
+                    model = background,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize(),
+                )
+                Box(
+                    Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = backgroundDim)),
+                )
+            }
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                val image = state.image
+                if (image != null) {
+                    ZoomableImage(image = image, onError = onImageError)
+                } else if (state.loading) {
+                    CircularProgressIndicator()
+                } else {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(
+                            Icons.Outlined.Image,
+                            contentDescription = null,
+                            modifier = Modifier.size(64.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Spacer(Modifier.size(8.dp))
+                        Text(stringResource(R.string.no_image), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
                 }
             }
         }
@@ -366,7 +386,8 @@ private fun ZoomableImage(image: LoadedImage, onError: () -> Unit) {
         contentAlignment = Alignment.Center,
         modifier = Modifier
             .fillMaxSize()
-            .clipToBounds()
+            // Rounded viewport: a zoomed image that overflows the area keeps rounded corners too.
+            .clip(RoundedCornerShape(IMAGE_CORNER))
             .onSizeChanged { size = it }
             .pointerInput(image.key) {
                 detectTapGestures(onDoubleTap = { tap ->
@@ -388,8 +409,6 @@ private fun ZoomableImage(image: LoadedImage, onError: () -> Unit) {
             },
     ) {
         val ratio = image.aspectRatio
-        val zoomed by remember(image.key) { derivedStateOf { scale > 1f } }
-        val shape = RoundedCornerShape(if (zoomed) 0.dp else 20.dp)
         AsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
                 .data(image.bytes)
@@ -404,10 +423,15 @@ private fun ZoomableImage(image: LoadedImage, onError: () -> Unit) {
                     scaleY = scale
                     translationX = offset.x
                     translationY = offset.y
+                    // The clip is scaled with the layer, so divide the radius by the zoom to keep
+                    // the corners visually the same size. Runs in the draw phase: no recomposition.
+                    shape = RoundedCornerShape(IMAGE_CORNER.toPx() / scale)
+                    clip = true
+                    shadowElevation = 6.dp.toPx()
                 }
-                .then(if (ratio != null) Modifier.aspectRatio(ratio) else Modifier.fillMaxSize())
-                .shadow(6.dp, shape)
-                .clip(shape),
+                .then(if (ratio != null) Modifier.aspectRatio(ratio) else Modifier.fillMaxSize()),
         )
     }
 }
+
+private val IMAGE_CORNER = 20.dp

@@ -1,6 +1,16 @@
 package moe.nyarchlinux.catgirldownloader.ui
 
 import androidx.activity.compose.rememberLauncherForActivityResult
+import kotlin.math.roundToInt
+import coil.compose.AsyncImage
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.material3.Slider
+import androidx.compose.material.icons.outlined.Contrast
+import androidx.compose.material.icons.outlined.Wallpaper
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -75,6 +85,10 @@ fun PreferencesScreen(
     var intervalDialog by rememberSaveable { mutableStateOf(false) }
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
+    val pickBackground = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        if (uri != null) vm.setBackgroundImage(uri)
+    }
+
     val pickFolder = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
         if (uri != null) vm.setDownloadFolder(uri)
     }
@@ -141,6 +155,61 @@ fun PreferencesScreen(
                 supportingContent = {
                     Text(settings.blacklistTags.ifBlank { stringResource(R.string.pref_danbooru_tags_none) })
                 },
+            )
+
+            GroupHeader(R.string.pref_group_appearance)
+            val background = remember(settings.backgroundFile) { vm.backgroundFile(settings) }
+            ListItem(
+                modifier = Modifier.clickable {
+                    pickBackground.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                },
+                leadingContent = {
+                    if (background != null) {
+                        AsyncImage(
+                            model = background,
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(MaterialTheme.shapes.small),
+                        )
+                    } else {
+                        Icon(Icons.Outlined.Wallpaper, contentDescription = null)
+                    }
+                },
+                headlineContent = { Text(stringResource(R.string.pref_background)) },
+                supportingContent = {
+                    Text(
+                        stringResource(
+                            if (background != null) R.string.pref_background_custom else R.string.pref_background_none,
+                        ),
+                    )
+                },
+                trailingContent = if (background != null) {
+                    {
+                        IconButton(onClick = vm::clearBackground) {
+                            Icon(Icons.Filled.RestartAlt, contentDescription = stringResource(R.string.pref_background_remove))
+                        }
+                    }
+                } else {
+                    null
+                },
+            )
+            // Local value while dragging; saved when the finger is lifted.
+            var dim by remember(settings.backgroundDim) { mutableFloatStateOf(settings.backgroundDim) }
+            ListItem(
+                leadingContent = { Icon(Icons.Outlined.Contrast, contentDescription = null) },
+                headlineContent = { Text(stringResource(R.string.pref_background_dim)) },
+                supportingContent = {
+                    Slider(
+                        value = dim,
+                        onValueChange = { dim = it },
+                        onValueChangeFinished = { vm.setBackgroundDim(dim) },
+                        valueRange = 0f..Settings.MAX_BACKGROUND_DIM,
+                        enabled = background != null,
+                    )
+                },
+                trailingContent = { Text("${(dim * 100).roundToInt()}%") },
             )
 
             GroupHeader(R.string.pref_group_reload)

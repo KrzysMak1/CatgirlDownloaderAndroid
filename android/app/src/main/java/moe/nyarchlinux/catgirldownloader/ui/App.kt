@@ -84,6 +84,8 @@ fun CatgirlDownloaderApp(vm: MainViewModel = viewModel()) {
         }
     }
 
+    val background = remember(settings.backgroundFile) { vm.backgroundFile(settings) }
+
     BackHandler(enabled = showPreferences) { showPreferences = false }
 
     AnimatedContent(
@@ -111,6 +113,8 @@ fun CatgirlDownloaderApp(vm: MainViewModel = viewModel()) {
                 onAutoReloadChange = vm::setAutoReload,
                 onOpenPreferences = { showPreferences = true },
                 onImageError = vm::onImageDisplayFailed,
+                background = background,
+                backgroundDim = settings.backgroundDim,
             )
         }
     }
